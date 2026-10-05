@@ -4,8 +4,8 @@
 #include <LittleFS.h>
 
 const int LED_PIN = 2;
-const char* ssid = "Sonia_Vainet";
-const char* password = "303529LC";
+const char* ssid = "sua_rede_wifi";
+const char* password = "sua_senha_wifi";
 
 WebServer server(80);
 
