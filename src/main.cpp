@@ -1,15 +1,12 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <LittleFS.h>
 
-const char* ssid = "nome_generico_da_sua_rede";
-const char* password = "senha_generica_da_sua_rede";
+const char* ssid = "Sonia_Vainet";
+const char* password = "303529LC";
 
 WebServer server(80);
-
-void handleRoot() {
-    server.send(200, "text/html", "<h1>Sistema de Controle de Acesso</h1>");
-}
 
 void setup() {
     Serial.begin(115200);
@@ -34,7 +31,62 @@ void setup() {
     Serial.print("IP do ESP32: ");
     Serial.println(WiFi.localIP());
 
-    server.on("/", handleRoot);
+    if (!LittleFS.begin(true)) {
+        Serial.println("Erro ao iniciar o LittleFS!");
+        return;
+    }
+
+    Serial.println("LittleFS iniciado!");
+
+    server.on("/", HTTP_GET, []() {
+        File file = LittleFS.open("/index.html", "r");
+
+        if (!file) {
+            server.send(500, "text/plain", "Erro ao abrir index.html");
+            return;
+        }
+
+        server.streamFile(file, "text/html");
+        file.close();
+    });
+
+    server.on("/css/style.css", HTTP_GET, []() {
+        File file = LittleFS.open("/css/style.css", "r");
+
+        if (!file) {
+            server.send(404, "text/plain", "CSS nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "text/css");
+        file.close();
+    });
+
+    server.on("/js/app.js", HTTP_GET, []() {
+        File file = LittleFS.open("/js/app.js", "r");
+
+        if (!file) {
+            server.send(404, "text/plain", "JavaScript nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "application/javascript");
+        file.close();
+    });
+
+    server.on("/api/status", HTTP_GET, []() {
+        String json = "{";
+        json += "\"status\":\"online\",";
+        json += "\"wifi\":";
+        json += (WiFi.status() == WL_CONNECTED ? "true" : "false");
+        json += ",";
+        json += "\"ip\":\"";
+        json += WiFi.localIP().toString();
+        json += "\"";
+        json += "}";
+
+        server.send(200, "application/json", json);
+    });
 
     server.begin();
 
