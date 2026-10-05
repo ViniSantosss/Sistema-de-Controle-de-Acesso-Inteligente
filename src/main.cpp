@@ -3,6 +3,7 @@
 #include <WebServer.h>
 #include <LittleFS.h>
 
+const int LED_PIN = 2;
 const char* ssid = "Sonia_Vainet";
 const char* password = "303529LC";
 
@@ -10,6 +11,9 @@ WebServer server(80);
 
 void setup() {
     Serial.begin(115200);
+
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
 
     Serial.println();
     Serial.println("================================");
@@ -86,6 +90,16 @@ void setup() {
         json += "}";
 
         server.send(200, "application/json", json);
+    });
+
+    server.on("/api/led/on", HTTP_GET, []() {
+        digitalWrite(LED_PIN, HIGH);
+        server.send(200, "application/json", "{\"led\":true}");
+    });
+
+    server.on("/api/led/off", HTTP_GET, []() {
+        digitalWrite(LED_PIN, LOW);
+        server.send(200, "application/json", "{\"led\":false}");
     });
 
     server.begin();

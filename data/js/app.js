@@ -19,3 +19,29 @@ async function carregarStatus() {
 }
 
 carregarStatus();
+
+async function ligarLed() {
+    try {
+        const resposta = await fetch("/api/led/on");
+        const dados = await resposta.json();
+
+        if (dados.led) {
+            document.getElementById("ledStatus").textContent = "Ligado";
+        }
+    } catch (erro) {
+        console.error("Erro ao ligar LED:", erro);
+    }
+}
+
+async function desligarLed() {
+    try {
+        const resposta = await fetch("/api/led/off");
+        const dados = await resposta.json();
+
+        if (!dados.led) {
+            document.getElementById("ledStatus").textContent = "Desligado";
+        }
+    } catch (erro) {
+        console.error("Erro ao desligar LED:", erro);
+    }
+}
