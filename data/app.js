@@ -1,1 +1,0 @@
-console.log("Interface carregada pelo ESP32!");
