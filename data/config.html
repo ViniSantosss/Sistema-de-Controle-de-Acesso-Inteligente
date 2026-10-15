@@ -10,43 +10,45 @@
 
 <body>
 
-    <header>
-        <h1>Sistema de Controle de Acesso</h1>
-
-        <nav>
+    <header class="page-header">
+        <a class="page-brand" href="/" aria-label="Controle de Acesso, início">
+            <span class="brand-mark" aria-hidden="true">CA</span>
+            <span>Controle de Acesso</span>
+        </a>
+        <nav class="site-nav" aria-label="Navegação principal">
             <a href="/panel.html">Painel</a>
-            <a href="/usuarios.html">Usuários</a>
-            <a href="/configuracoes.html">Configurações</a>
+            <a href="/users.html">Usuários</a>
+            <a href="/config.html" aria-current="page">Configurações</a>
             <a href="/performance.html">Performance</a>
         </nav>
     </header>
 
-    <main>
+    <main class="page-content">
+        <div class="page-heading">
+            <p class="eyebrow">PREFERÊNCIAS DO DISPOSITIVO</p>
+            <h1>Configurações</h1>
+        </div>
 
-        <h2>Configurações</h2>
-
-        <section>
+        <section class="page-section">
             <h3>Sistema</h3>
 
-            <label for="nomeSistema">Nome do sistema</label>
-            <input type="text" id="nomeSistema">
+            <div class="settings-form">
+                <label for="nomeSistema">Nome do sistema</label>
+                <input type="text" id="nomeSistema">
 
-            <br><br>
+                <label for="modo">Modo de funcionamento</label>
+                <select id="modo">
+                    <option value="normal">Normal</option>
+                    <option value="offline">Offline</option>
+                </select>
 
-            <label for="modo">Modo de funcionamento</label>
-            <select id="modo">
-                <option value="normal">Normal</option>
-                <option value="offline">Offline</option>
-            </select>
-
-            <br><br>
-
-            <button id="salvarConfiguracoes">
-                Salvar configurações
-            </button>
+                <button id="salvarConfiguracoes">
+                    Salvar configurações
+                </button>
+            </div>
         </section>
 
-        <section>
+        <section class="page-section">
             <h3>Rede</h3>
 
             <p>Wi-Fi: <span id="wifiStatus">--</span></p>

@@ -10,22 +10,26 @@
 
 <body>
 
-    <header>
-        <h1>Sistema de Controle de Acesso</h1>
-
-        <nav>
+    <header class="page-header">
+        <a class="page-brand" href="/" aria-label="Controle de Acesso, início">
+            <span class="brand-mark" aria-hidden="true">CA</span>
+            <span>Controle de Acesso</span>
+        </a>
+        <nav class="site-nav" aria-label="Navegação principal">
             <a href="/panel.html">Painel</a>
-            <a href="/usuarios.html">Usuários</a>
-            <a href="/configuracoes.html">Configurações</a>
+            <a href="/users.html" aria-current="page">Usuários</a>
+            <a href="/config.html">Configurações</a>
             <a href="/performance.html">Performance</a>
         </nav>
     </header>
 
-    <main>
+    <main class="page-content">
+        <div class="page-heading">
+            <p class="eyebrow">ACESSO E CREDENCIAIS</p>
+            <h1>Usuários</h1>
+        </div>
 
-        <h2>Usuários</h2>
-
-        <section>
+        <section class="page-section">
             <h3>Cadastrar usuário</h3>
 
             <form id="usuarioForm">
@@ -49,9 +53,10 @@
             <p id="mensagem"></p>
         </section>
 
-        <section>
+        <section class="page-section">
             <h3>Usuários cadastrados</h3>
 
+            <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
@@ -65,6 +70,7 @@
                 <tbody id="listaUsuarios">
                 </tbody>
             </table>
+            </div>
 
         </section>
 
