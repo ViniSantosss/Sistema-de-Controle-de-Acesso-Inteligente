@@ -1,23 +1,62 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurações</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
 
-    <h1>Configurações</h1>
+    <header>
+        <h1>Sistema de Controle de Acesso</h1>
 
-    <nav>
-        <a href="/panel.html">Painel</a>
-        <a href="/usuarios.html">Usuários</a>
-        <a href="/configuracoes.html">Configurações</a>
-        <a href="/performance.html">Performance</a>
-    </nav>
+        <nav>
+            <a href="/panel.html">Painel</a>
+            <a href="/usuarios.html">Usuários</a>
+            <a href="/configuracoes.html">Configurações</a>
+            <a href="/performance.html">Performance</a>
+        </nav>
+    </header>
 
-    <h2>Configurações do sistema</h2>
+    <main>
+
+        <h2>Configurações</h2>
+
+        <section>
+            <h3>Sistema</h3>
+
+            <label for="nomeSistema">Nome do sistema</label>
+            <input type="text" id="nomeSistema">
+
+            <br><br>
+
+            <label for="modo">Modo de funcionamento</label>
+            <select id="modo">
+                <option value="normal">Normal</option>
+                <option value="offline">Offline</option>
+            </select>
+
+            <br><br>
+
+            <button id="salvarConfiguracoes">
+                Salvar configurações
+            </button>
+        </section>
+
+        <section>
+            <h3>Rede</h3>
+
+            <p>Wi-Fi: <span id="wifiStatus">--</span></p>
+            <p>IP do ESP32: <span id="ip">--</span></p>
+        </section>
+
+    </main>
+
+    <script src="/js/app.js"></script>
 
 </body>
+
 </html>
