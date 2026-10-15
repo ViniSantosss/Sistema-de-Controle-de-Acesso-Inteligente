@@ -7,26 +7,32 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 
-<body>
+<body class="login-page">
+    <main class="login-shell">
+        <div class="login-brand">
+            <span class="brand-mark" aria-hidden="true">CA</span>
+            <div class="login-brand-copy">
+                <span class="login-kicker">SISTEMA LOCAL</span>
+                <span class="login-product">Controle de Acesso</span>
+            </div>
+        </div>
 
-    <main>
-        <h1>Sistema de Controle de Acesso</h1>
-
-        <h2>Login</h2>
+        <div class="login-heading">
+            <h1>Entrar</h1>
+            <p>Acesso ao painel</p>
+        </div>
 
         <form id="loginForm">
+            <label for="usuario"><svg class="icon label-icon" aria-hidden="true"><use href="/icons.svg#user-round"></use></svg><span>Usuário</span></label>
+            <input type="text" id="usuario" autocomplete="username" required>
 
-            <label for="usuario">Usuário</label>
-            <input type="text" id="usuario" required>
+            <label for="senha"><svg class="icon label-icon" aria-hidden="true"><use href="/icons.svg#lock-keyhole"></use></svg><span>Senha</span></label>
+            <input type="password" id="senha" autocomplete="current-password" required>
 
-            <label for="senha">Senha</label>
-            <input type="password" id="senha" required>
-
-            <button type="submit">Entrar</button>
-
+            <button type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#log-in"></use></svg><span>Entrar</span></button>
         </form>
 
-        <p id="mensagem"></p>
+        <p id="mensagem" role="status" aria-live="polite"></p>
     </main>
 
     <script src="/js/app.js"></script>

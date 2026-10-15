@@ -69,6 +69,18 @@ void setup() {
         file.close();
     });
 
+    server.on("/icons.svg", HTTP_GET, []() {
+        File file = LittleFS.open("/icons.svg", "r");
+
+        if (!file) {
+            server.send(404, "text/plain", "Icones nao encontrados");
+            return;
+        }
+
+        server.streamFile(file, "image/svg+xml");
+        file.close();
+    });
+
     server.on("/js/app.js", HTTP_GET, []() {
         File file = LittleFS.open("/js/app.js", "r");
 
