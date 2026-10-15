@@ -2,10 +2,13 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <LittleFS.h>
+#include "routes/statusRoutes.h"
+#include "routes/ledRoutes.h"
+#include "routes/authRoutes.h"
 
 const int LED_PIN = 2;
-const char* ssid = "sua_rede_wifi";
-const char* password = "sua_senha_wifi";
+const char* ssid = "busquem comer cimento";
+const char* password = "123456788sixseven";
 
 WebServer server(80);
 
@@ -76,31 +79,60 @@ void setup() {
 
         server.streamFile(file, "application/javascript");
         file.close();
+
     });
 
-    server.on("/api/status", HTTP_GET, []() {
-        String json = "{";
-        json += "\"status\":\"online\",";
-        json += "\"wifi\":";
-        json += (WiFi.status() == WL_CONNECTED ? "true" : "false");
-        json += ",";
-        json += "\"ip\":\"";
-        json += WiFi.localIP().toString();
-        json += "\"";
-        json += "}";
+    server.on("/panel.html", HTTP_GET, []() {
+        File file = LittleFS.open("/panel.html", "r");
 
-        server.send(200, "application/json", json);
+        if (!file) {
+            server.send(404, "text/plain", "panel.html nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "text/html");
+        file.close();
     });
 
-    server.on("/api/led/on", HTTP_GET, []() {
-        digitalWrite(LED_PIN, HIGH);
-        server.send(200, "application/json", "{\"led\":true}");
+    server.on("/users.html", HTTP_GET, []() {
+        File file = LittleFS.open("/users.html", "r");
+
+        if (!file) {
+            server.send(404, "text/plain", "users.html nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "text/html");
+        file.close();
     });
 
-    server.on("/api/led/off", HTTP_GET, []() {
-        digitalWrite(LED_PIN, LOW);
-        server.send(200, "application/json", "{\"led\":false}");
+    server.on("/config.html", HTTP_GET, []() {
+        File file = LittleFS.open("/config.html", "r");
+
+        if (!file) {
+            server.send(404, "text/plain", "configuracoes.html nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "text/html");
+        file.close();
     });
+
+    server.on("/performance.html", HTTP_GET, []() {
+        File file = LittleFS.open("/performance.html", "r");
+
+        if (!file) {
+            server.send(404, "text/plain", "performance.html nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "text/html");
+        file.close();
+    });
+
+    configurarRotasStatus(server);
+    configurarRotasLed(server, LED_PIN);
+    configurarRotasAuth(server);
 
     server.begin();
 
