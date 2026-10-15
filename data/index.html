@@ -3,70 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#edf7f6">
-    <title>Controle de Acesso | ESP32</title>
+    <title>Controle de Acesso</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
-    <main class="dashboard">
-        <header class="topbar">
-            <a class="brand" href="/" aria-label="Controle de Acesso, início">
-                <span class="brand-mark" aria-hidden="true">CA</span>
-                <span>Controle de Acesso</span>
-            </a>
-            <span class="device-label"><span class="device-dot"></span> ESP32</span>
-        </header>
 
-        <section class="intro" aria-labelledby="page-title">
-            <p class="eyebrow">PAINEL DO DISPOSITIVO</p>
-        </section>
+    <main>
+        <h1>Sistema de Controle de Acesso</h1>
 
-        <section class="system-panel" aria-labelledby="system-title">
-            <div class="section-heading">
-                <div>
-                    <p class="eyebrow">VISÃO GERAL</p>
-                    <h2 id="system-title">Sistema</h2>
-                </div>
-                <span class="connection-state" id="status-indicator"><span class="state-dot"></span><span id="status">Carregando...</span></span>
-            </div>
-            <div class="system-details">
-                <div class="detail-item">
-                    <span class="detail-label">Rede Wi-Fi</span>
-                    <span class="detail-value" id="wifi">Carregando...</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Endereço IP</span>
-                    <span class="detail-value ip-value" id="ip">Carregando...</span>
-                </div>
-            </div>
-        </section>
+        <h2>Login</h2>
 
-        <section class="led-panel" aria-labelledby="led-title">
-            <div class="led-copy">
-                <p class="eyebrow">CONTROLE MANUAL</p>
-                <h2 id="led-title">LED integrado</h2>
-                <p class="led-description">Acione o indicador luminoso do dispositivo.</p>
-            </div>
-            <div class="led-state-row" aria-live="polite">
-                <span class="led-indicator" id="led-indicator" aria-hidden="true"></span>
-                <span>Estado do LED</span>
-                <strong id="ledStatus">Desconhecido</strong>
-            </div>
-            <div class="led-actions">
-                <button class="action-button turn-on" id="turn-on" type="button">
-                    <span class="button-icon" aria-hidden="true">⏻</span>
-                    Ligar LED
-                </button>
-                <button class="action-button turn-off" id="turn-off" type="button">
-                    <span class="button-icon" aria-hidden="true">○</span>
-                    Desligar LED
-                </button>
-            </div>
-            <p class="action-message" id="action-message" role="status" aria-live="polite"></p>
-        </section>
+        <form id="loginForm">
 
-        <footer class="footer"><span class="footer-signal"></span> Atualizado automaticamente ao carregar</footer>
+            <label for="usuario">Usuário</label>
+            <input type="text" id="usuario" required>
+
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" required>
+
+            <button type="submit">Entrar</button>
+
+        </form>
+
+        <p id="mensagem"></p>
     </main>
+
     <script src="/js/app.js"></script>
+
 </body>
 </html>
