@@ -57,7 +57,16 @@ async function carregarUsuarios() {
                 <td>${usuario.nome}</td>
                 <td>Não cadastrada</td>
                 <td>${usuario.tipoAcesso}</td>
-                <td>Ativo</td>
+                <td>
+                    ${usuario.ativo ? "Ativo" : "Desativado"}
+                    ${
+                        usuario.ativo
+                            ? `<button type="button" onclick="desativarUsuario(${usuario.id})">
+                                Desativar
+                               </button>`
+                            : ""
+                    }
+                </td>
             `;
 
             lista.appendChild(linha);
@@ -65,6 +74,29 @@ async function carregarUsuarios() {
 
     } catch (erro) {
         console.error("Erro ao carregar usuários:", erro);
+    }
+}
+
+async function desativarUsuario(id) {
+    try {
+        const resposta = await fetch(
+            `/api/usuarios/desativar?id=${id}`,
+            {
+                method: "POST"
+            }
+        );
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+            console.error(dados.erro);
+            return;
+        }
+
+        carregarUsuarios();
+
+    } catch (erro) {
+        console.error("Erro ao desativar usuário:", erro);
     }
 }
 

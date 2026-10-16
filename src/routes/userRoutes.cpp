@@ -4,6 +4,8 @@ struct Usuario {
     int id;
     String nome;
     String tipoAcesso;
+    bool ativo;
+    String credencialNFC;
 };
 
 int proximoId = 1;
@@ -12,6 +14,8 @@ Usuario usuarios[20];
 int quantidadeUsuarios = 0;
 
 void configurarRotasUsuarios(WebServer& server) {
+
+    // ROTA POST /api/usuarios --------------------------------------
 
     server.on("/api/usuarios", HTTP_POST, [&server]() {
 
@@ -41,7 +45,8 @@ void configurarRotasUsuarios(WebServer& server) {
         usuarios[quantidadeUsuarios].id = proximoId;
         usuarios[quantidadeUsuarios].nome = nome;
         usuarios[quantidadeUsuarios].tipoAcesso = tipoAcesso;
-
+        usuarios[quantidadeUsuarios].ativo = true;
+        usuarios[quantidadeUsuarios].credencialNFC = "";
         quantidadeUsuarios++;
         proximoId++;
 
@@ -51,6 +56,8 @@ void configurarRotasUsuarios(WebServer& server) {
             "{\"mensagem\":\"Usuario cadastrado com sucesso\"}"
         );
     });
+
+    //ROTA GET /api/usuarios --------------------------------------
 
     server.on("/api/usuarios", HTTP_GET, [&server]() {
 
@@ -65,7 +72,9 @@ void configurarRotasUsuarios(WebServer& server) {
             json += "{";
             json += "\"id\":" + String(usuarios[i].id) + ",";
             json += "\"nome\":\"" + usuarios[i].nome + "\",";
-            json += "\"tipoAcesso\":\"" + usuarios[i].tipoAcesso + "\"";
+            json += "\"tipoAcesso\":\"" + usuarios[i].tipoAcesso + "\",";
+            json += "\"ativo\":" + String(usuarios[i].ativo ? "true" : "false");
+            json += "\"credencialNfc\":\"" + usuarios[i].credencialNFC + "\",";
             json += "}";
         }
 
@@ -76,5 +85,41 @@ void configurarRotasUsuarios(WebServer& server) {
             "application/json",
             json
         );
+    });
+
+    server.on("/api/usuarios/desativar", HTTP_POST, [&server]() {
+
+        if (!server.hasArg("id")) {
+            server.send(
+                400,
+                "application/json",
+                "{\"erro\":\"ID do usuario e obrigatorio\"}"
+            );
+            return;
+        }
+
+        int id = server.arg("id").toInt();
+
+        for (int i = 0; i < quantidadeUsuarios; i++) {
+
+            if (usuarios[i].id == id) {
+
+                usuarios[i].ativo = false;
+
+                server.send(
+                    200,
+                    "application/json",
+                    "{\"mensagem\":\"Usuario desativado com sucesso\"}"
+                );
+
+            return;
+            }
+        }
+
+            server.send(
+                404,
+                "application/json",
+                "{\"erro\":\"Usuario nao encontrado\"}"
+            );
     });
 }
