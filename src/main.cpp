@@ -2,10 +2,15 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <LittleFS.h>
+#include "routes/statusRoutes.h"
+#include "routes/ledRoutes.h"
+#include "routes/authRoutes.h"
+#include "routes/pageRoutes.h"
+#include "routes/userRoutes.h"
 
 const int LED_PIN = 2;
-const char* ssid = "sua_rede_wifi";
-const char* password = "sua_senha_wifi";
+const char* ssid = "busquem comer cimento";
+const char* password = "123456788sixseven";
 
 WebServer server(80);
 
@@ -42,65 +47,11 @@ void setup() {
 
     Serial.println("LittleFS iniciado!");
 
-    server.on("/", HTTP_GET, []() {
-        File file = LittleFS.open("/index.html", "r");
-
-        if (!file) {
-            server.send(500, "text/plain", "Erro ao abrir index.html");
-            return;
-        }
-
-        server.streamFile(file, "text/html");
-        file.close();
-    });
-
-    server.on("/css/style.css", HTTP_GET, []() {
-        File file = LittleFS.open("/css/style.css", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "CSS nao encontrado");
-            return;
-        }
-
-        server.streamFile(file, "text/css");
-        file.close();
-    });
-
-    server.on("/js/app.js", HTTP_GET, []() {
-        File file = LittleFS.open("/js/app.js", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "JavaScript nao encontrado");
-            return;
-        }
-
-        server.streamFile(file, "application/javascript");
-        file.close();
-    });
-
-    server.on("/api/status", HTTP_GET, []() {
-        String json = "{";
-        json += "\"status\":\"online\",";
-        json += "\"wifi\":";
-        json += (WiFi.status() == WL_CONNECTED ? "true" : "false");
-        json += ",";
-        json += "\"ip\":\"";
-        json += WiFi.localIP().toString();
-        json += "\"";
-        json += "}";
-
-        server.send(200, "application/json", json);
-    });
-
-    server.on("/api/led/on", HTTP_GET, []() {
-        digitalWrite(LED_PIN, HIGH);
-        server.send(200, "application/json", "{\"led\":true}");
-    });
-
-    server.on("/api/led/off", HTTP_GET, []() {
-        digitalWrite(LED_PIN, LOW);
-        server.send(200, "application/json", "{\"led\":false}");
-    });
+    configurarRotasStatus(server);
+    configurarRotasLed(server, LED_PIN);
+    configurarRotasAuth(server);
+    configurarRotasPaginas(server);
+    configurarRotasUsuarios(server);
 
     server.begin();
 

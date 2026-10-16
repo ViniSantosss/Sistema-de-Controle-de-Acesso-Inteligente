@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuários</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <header class="page-header">
+        <a class="page-brand" href="/" aria-label="Controle de Acesso, início">
+            <span class="brand-mark" aria-hidden="true">CA</span>
+            <span>Controle de Acesso</span>
+        </a>
+        <nav class="site-nav" aria-label="Navegação principal">
+            <a href="/panel.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#layout-dashboard"></use></svg><span>Painel</span></a>
+            <a href="/users.html" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users-round"></use></svg><span>Usuários</span></a>
+            <a href="/config.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Configurações</span></a>
+            <a href="/performance.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"></use></svg><span>Performance</span></a>
+        </nav>
+    </header>
+
+    <main class="page-content">
+        <div class="page-heading">
+            <p class="eyebrow">ACESSO E CREDENCIAIS</p>
+            <h1>Usuários</h1>
+        </div>
+
+        <section class="page-section user-form-section">
+            <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#user-round-plus"></use></svg>Cadastrar usuário</h3>
+
+            <form id="usuarioForm">
+
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" required>
+
+                <label for="tipoAcesso">Tipo de acesso</label>
+                <select id="tipoAcesso">
+                    <option value="permanente">Permanente</option>
+                    <option value="temporario">Temporário</option>
+                </select>
+
+                <button type="submit">Cadastrar usuário</button>
+
+            </form>
+
+            <p id="mensagem"></p>
+        </section>
+
+        <section class="page-section">
+            <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#users-round"></use></svg>Usuários cadastrados</h3>
+
+            <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Credencial</th>
+                        <th>Acesso</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="listaUsuarios">
+                </tbody>
+            </table>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="/js/app.js"></script>
+
+</body>
+
+</html>

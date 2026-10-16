@@ -1,47 +1,103 @@
-async function carregarStatus() {
-    try {
-        const resposta = await fetch("/api/status");
+const usuarioForm = document.getElementById("usuarioForm");
 
-        const dados = await resposta.json();
+if (usuarioForm) {
+    usuarioForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
 
-        document.getElementById("status").textContent = dados.status;
-        document.getElementById("wifi").textContent =
-            dados.wifi ? "Conectado" : "Desconectado";
-        document.getElementById("ip").textContent = dados.ip;
+        const nome = document.getElementById("nome").value;
+        const tipoAcesso = document.getElementById("tipoAcesso").value.toUpperCase();
 
-    } catch (erro) {
-        console.error("Erro ao buscar status:", erro);
+        try {
+            const resposta = await fetch(
+                `/api/usuarios?nome=${encodeURIComponent(nome)}&tipoAcesso=${encodeURIComponent(tipoAcesso)}`,
+                {
+                    method: "POST"
+                }
+            );
 
-        document.getElementById("status").textContent = "Erro";
-        document.getElementById("wifi").textContent = "Erro";
-        document.getElementById("ip").textContent = "Erro";
-    }
-}
+            const dados = await resposta.json();
 
-carregarStatus();
+            const mensagem = document.getElementById("mensagem");
 
-async function ligarLed() {
-    try {
-        const resposta = await fetch("/api/led/on");
-        const dados = await resposta.json();
+            if (!resposta.ok) {
+                mensagem.textContent = dados.erro;
+                return;
+            }
 
-        if (dados.led) {
-            document.getElementById("ledStatus").textContent = "Ligado";
+            mensagem.textContent = dados.mensagem;
+
+            usuarioForm.reset();
+
+            carregarUsuarios();
+
+        } catch (erro) {
+            console.error("Erro ao cadastrar usuário:", erro);
         }
+    });
+}
+
+async function carregarUsuarios() {
+    try {
+        const resposta = await fetch("/api/usuarios");
+
+        const usuarios = await resposta.json();
+
+        const lista = document.getElementById("listaUsuarios");
+
+        if (!lista) {
+            return;
+        }
+
+        lista.innerHTML = "";
+
+        usuarios.forEach(usuario => {
+            const linha = document.createElement("tr");
+
+            linha.innerHTML = `
+                <td>${usuario.nome}</td>
+                <td>Não cadastrada</td>
+                <td>${usuario.tipoAcesso}</td>
+                <td>
+                    ${usuario.ativo ? "Ativo" : "Desativado"}
+                    ${
+                        usuario.ativo
+                            ? `<button type="button" onclick="desativarUsuario(${usuario.id})">
+                                Desativar
+                               </button>`
+                            : ""
+                    }
+                </td>
+            `;
+
+            lista.appendChild(linha);
+        });
+
     } catch (erro) {
-        console.error("Erro ao ligar LED:", erro);
+        console.error("Erro ao carregar usuários:", erro);
     }
 }
 
-async function desligarLed() {
+async function desativarUsuario(id) {
     try {
-        const resposta = await fetch("/api/led/off");
+        const resposta = await fetch(
+            `/api/usuarios/desativar?id=${id}`,
+            {
+                method: "POST"
+            }
+        );
+
         const dados = await resposta.json();
 
-        if (!dados.led) {
-            document.getElementById("ledStatus").textContent = "Desligado";
+        if (!resposta.ok) {
+            console.error(dados.erro);
+            return;
         }
+
+        carregarUsuarios();
+
     } catch (erro) {
-        console.error("Erro ao desligar LED:", erro);
+        console.error("Erro ao desativar usuário:", erro);
     }
 }
+
+carregarUsuarios();
