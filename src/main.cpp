@@ -5,6 +5,8 @@
 #include "routes/statusRoutes.h"
 #include "routes/ledRoutes.h"
 #include "routes/authRoutes.h"
+#include "routes/pageRoutes.h"
+#include "routes/userRoutes.h"
 
 const int LED_PIN = 2;
 const char* ssid = "busquem comer cimento";
@@ -45,106 +47,11 @@ void setup() {
 
     Serial.println("LittleFS iniciado!");
 
-    server.on("/", HTTP_GET, []() {
-        File file = LittleFS.open("/index.html", "r");
-
-        if (!file) {
-            server.send(500, "text/plain", "Erro ao abrir index.html");
-            return;
-        }
-
-        server.streamFile(file, "text/html");
-        file.close();
-    });
-
-    server.on("/css/style.css", HTTP_GET, []() {
-        File file = LittleFS.open("/css/style.css", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "CSS nao encontrado");
-            return;
-        }
-
-        server.streamFile(file, "text/css");
-        file.close();
-    });
-
-    server.on("/icons.svg", HTTP_GET, []() {
-        File file = LittleFS.open("/icons.svg", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "Icones nao encontrados");
-            return;
-        }
-
-        server.streamFile(file, "image/svg+xml");
-        file.close();
-    });
-
-    server.on("/js/app.js", HTTP_GET, []() {
-        File file = LittleFS.open("/js/app.js", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "JavaScript nao encontrado");
-            return;
-        }
-
-        server.streamFile(file, "application/javascript");
-        file.close();
-
-    });
-
-    server.on("/panel.html", HTTP_GET, []() {
-        File file = LittleFS.open("/panel.html", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "panel.html nao encontrado");
-            return;
-        }
-
-        server.streamFile(file, "text/html");
-        file.close();
-    });
-
-    server.on("/users.html", HTTP_GET, []() {
-        File file = LittleFS.open("/users.html", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "users.html nao encontrado");
-            return;
-        }
-
-        server.streamFile(file, "text/html");
-        file.close();
-    });
-
-    server.on("/config.html", HTTP_GET, []() {
-        File file = LittleFS.open("/config.html", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "configuracoes.html nao encontrado");
-            return;
-        }
-
-        server.streamFile(file, "text/html");
-        file.close();
-    });
-
-    server.on("/performance.html", HTTP_GET, []() {
-        File file = LittleFS.open("/performance.html", "r");
-
-        if (!file) {
-            server.send(404, "text/plain", "performance.html nao encontrado");
-            return;
-        }
-
-        server.streamFile(file, "text/html");
-        file.close();
-    });
-
     configurarRotasStatus(server);
     configurarRotasLed(server, LED_PIN);
     configurarRotasAuth(server);
+    configurarRotasPaginas(server);
+    configurarRotasUsuarios(server);
 
     server.begin();
 

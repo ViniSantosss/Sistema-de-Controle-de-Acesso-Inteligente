@@ -1,56 +1,71 @@
-const loginForm = document.getElementById("loginForm");
-const mensagem = document.getElementById("mensagem");
 const usuarioForm = document.getElementById("usuarioForm");
 
-if (loginForm) loginForm.addEventListener("submit", async (evento) => {
-
-    evento.preventDefault();
-
-    const usuario = document.getElementById("usuario").value;
-    const senha = document.getElementById("senha").value;
-
-    try {
-
-        const resposta = await fetch(
-            `/api/login?usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`
-        );
-
-        const dados = await resposta.json();
-
-        if (dados.autenticado) {
-            mensagem.textContent = "Login realizado com sucesso!";
-        } else {
-            mensagem.textContent = "Usuário ou senha incorretos.";
-        }
-
-    } catch (erro) {
-
-        console.error("Erro ao realizar login:", erro);
-        mensagem.textContent = "Erro ao conectar com o ESP32.";
-
-    }
-
-});
-
 if (usuarioForm) {
-
-    usuarioForm.addEventListener("submit", (evento) => {
-
-        evento.preventDefault();
+    usuarioForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
 
         const nome = document.getElementById("nome").value;
-        const credencial = document.getElementById("credencial").value;
-        const tipoAcesso = document.getElementById("tipoAcesso").value;
+        const tipoAcesso = document.getElementById("tipoAcesso").value.toUpperCase();
 
-        console.log("Usuário:", nome);
-        console.log("Credencial:", credencial);
-        console.log("Tipo de acesso:", tipoAcesso);
+        try {
+            const resposta = await fetch(
+                `/api/usuarios?nome=${encodeURIComponent(nome)}&tipoAcesso=${encodeURIComponent(tipoAcesso)}`,
+                {
+                    method: "POST"
+                }
+            );
 
-        document.getElementById("mensagem").textContent =
-            "Usuário preparado para cadastro.";
+            const dados = await resposta.json();
 
-        usuarioForm.reset();
+            const mensagem = document.getElementById("mensagem");
+
+            if (!resposta.ok) {
+                mensagem.textContent = dados.erro;
+                return;
+            }
+
+            mensagem.textContent = dados.mensagem;
+
+            usuarioForm.reset();
+
+            carregarUsuarios();
+
+        } catch (erro) {
+            console.error("Erro ao cadastrar usuário:", erro);
+        }
     });
-
 }
 
+async function carregarUsuarios() {
+    try {
+        const resposta = await fetch("/api/usuarios");
+
+        const usuarios = await resposta.json();
+
+        const lista = document.getElementById("listaUsuarios");
+
+        if (!lista) {
+            return;
+        }
+
+        lista.innerHTML = "";
+
+        usuarios.forEach(usuario => {
+            const linha = document.createElement("tr");
+
+            linha.innerHTML = `
+                <td>${usuario.nome}</td>
+                <td>Não cadastrada</td>
+                <td>${usuario.tipoAcesso}</td>
+                <td>Ativo</td>
+            `;
+
+            lista.appendChild(linha);
+        });
+
+    } catch (erro) {
+        console.error("Erro ao carregar usuários:", erro);
+    }
+}
+
+carregarUsuarios();
