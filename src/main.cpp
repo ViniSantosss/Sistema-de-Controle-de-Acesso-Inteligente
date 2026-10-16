@@ -9,8 +9,8 @@
 #include "routes/userRoutes.h"
 
 const int LED_PIN = 2;
-const char* ssid = "busquem comer cimento";
-const char* password = "123456788sixseven";
+const char* ssid = "sua_rede_wifi";
+const char* password = "senha_da_sua_rede";
 
 WebServer server(80);
 
