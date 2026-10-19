@@ -1,12 +1,8 @@
 #include "routes/userRoutes.h"
-
-struct Usuario {
-    int id;
-    String nome;
-    String tipoAcesso;
-    bool ativo;
-    String credencialNFC;
-};
+#include "telegram/telegramBot.h"
+#include "storage/userStorage.h"
+#include "models/user.h"
+#include "storage/userStorage.h"
 
 int proximoId = 1;
 
@@ -50,6 +46,10 @@ void configurarRotasUsuarios(WebServer& server) {
         quantidadeUsuarios++;
         proximoId++;
 
+        salvarUsuarios();
+
+        notificarUsuarioCadastrado(nome);
+
         server.send(
             201,
             "application/json",
@@ -73,8 +73,8 @@ void configurarRotasUsuarios(WebServer& server) {
             json += "\"id\":" + String(usuarios[i].id) + ",";
             json += "\"nome\":\"" + usuarios[i].nome + "\",";
             json += "\"tipoAcesso\":\"" + usuarios[i].tipoAcesso + "\",";
-            json += "\"ativo\":" + String(usuarios[i].ativo ? "true" : "false");
-            json += "\"credencialNfc\":\"" + usuarios[i].credencialNFC + "\",";
+            json += "\"ativo\":" + String(usuarios[i].ativo ? "true" : "false") + ",";
+            json += "\"credencialNfc\":\"" + usuarios[i].credencialNFC + "\"";
             json += "}";
         }
 
@@ -106,6 +106,10 @@ void configurarRotasUsuarios(WebServer& server) {
 
                 usuarios[i].ativo = false;
 
+                salvarUsuarios();
+
+                notificarUsuarioDesativado(usuarios[i].nome);
+
                 server.send(
                     200,
                     "application/json",
@@ -122,4 +126,51 @@ void configurarRotasUsuarios(WebServer& server) {
                 "{\"erro\":\"Usuario nao encontrado\"}"
             );
     });
+
+    server.on("/api/usuarios", HTTP_DELETE, [&server]() {
+
+    if (!server.hasArg("id")) {
+        server.send(
+            400,
+            "application/json",
+            "{\"erro\":\"ID do usuario e obrigatorio\"}"
+        );
+        return;
+    }
+
+    int id = server.arg("id").toInt();
+
+    for (int i = 0; i < quantidadeUsuarios; i++) {
+
+        if (usuarios[i].id == id) {
+
+            String nomeUsuario = usuarios[i].nome;
+
+            // Move os usuarios seguintes uma posicao para tras
+            for (int j = i; j < quantidadeUsuarios - 1; j++) {
+                usuarios[j] = usuarios[j + 1];
+            }
+
+            quantidadeUsuarios--;
+
+            salvarUsuarios();
+
+            notificarUsuarioDesativado(nomeUsuario);
+
+            server.send(
+                200,
+                "application/json",
+                "{\"mensagem\":\"Usuario excluido com sucesso\"}"
+            );
+
+            return;
+        }
+    }
+
+    server.send(
+        404,
+        "application/json",
+        "{\"erro\":\"Usuario nao encontrado\"}"
+    );
+});
 }

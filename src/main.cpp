@@ -1,16 +1,22 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
-#include <LittleFS.h>
+
 #include "routes/statusRoutes.h"
 #include "routes/ledRoutes.h"
 #include "routes/authRoutes.h"
 #include "routes/pageRoutes.h"
 #include "routes/userRoutes.h"
+#include "telegram/telegramBot.h"
+#include "routes/telegramRoutes.h"
+#include "storage/userStorage.h"
+#include "tasks/core0Tasks.h"
+#include "tasks/core1Tasks.h"
+#include "secrets.h"
 
 const int LED_PIN = 2;
-const char* ssid = "sua_rede_wifi";
-const char* password = "senha_da_sua_rede";
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 WebServer server(80);
 
@@ -40,18 +46,19 @@ void setup() {
     Serial.print("IP do ESP32: ");
     Serial.println(WiFi.localIP());
 
-    if (!LittleFS.begin(true)) {
-        Serial.println("Erro ao iniciar o LittleFS!");
-        return;
-    }
-
-    Serial.println("LittleFS iniciado!");
+    inicializarArmazenamentoUsuarios();
 
     configurarRotasStatus(server);
     configurarRotasLed(server, LED_PIN);
     configurarRotasAuth(server);
     configurarRotasPaginas(server);
     configurarRotasUsuarios(server);
+    configurarRotasTelegram(server);
+
+    iniciarTelegram();
+
+    iniciarTasksCore0();
+    iniciarTasksCore1();
 
     server.begin();
 

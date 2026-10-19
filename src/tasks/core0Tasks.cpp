@@ -12,7 +12,7 @@ void tarefaCore0(void* parametro) {
     }
 }
 
-void iniciarCore0Task() {
+void iniciarTasksCore0() {
 
     xTaskCreatePinnedToCore(
         tarefaCore0,
