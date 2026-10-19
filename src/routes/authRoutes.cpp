@@ -1,7 +1,8 @@
 #include "routes/authRoutes.h"
+#include "secrets.h"
 
-const char* USUARIO = "admin";
-const char* SENHA = "1234";
+const char* USUARIO = ESP32_USER;
+const char* SENHA = ESP32_PASSWORD;
 
 void configurarRotasAuth(WebServer& server) {
 
