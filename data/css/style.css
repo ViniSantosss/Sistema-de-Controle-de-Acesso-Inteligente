@@ -304,6 +304,7 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 }
 
 .user-form-section form { max-width: none; }
+.user-form-section form button[type="submit"] { justify-self: end; }
 
 .settings-form {
     display: grid;
@@ -357,6 +358,17 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 
 .page-section button:hover { transform: translateY(-1px); background: linear-gradient(180deg, #328d73, var(--green-dark)); }
 .page-section button:focus-visible { outline: 3px solid rgba(39, 138, 112, 0.25); outline-offset: 2px; }
+.user-status { display: flex; align-items: center; gap: 12px; }
+.user-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.user-actions button { min-height: 32px; margin: 0; padding: 0 10px; }
+.user-actions .button-delete {
+    border: 1px solid #a93632;
+    color: #fff;
+    background: linear-gradient(180deg, #d6534d, #bd3f3a);
+    box-shadow: 0 2px 7px rgba(189, 63, 58, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.user-actions .button-delete:hover { border-color: #922f2b; color: #fff; background: linear-gradient(180deg, #bd3f3a, #a93632); }
+.user-actions .button-delete:focus-visible { outline-color: rgba(185, 71, 61, 0.3); }
 .page-section p { margin-bottom: 8px; color: var(--muted); font-size: 13px; }
 .page-section p:last-child { margin-bottom: 0; }
 #mensagem { min-height: 18px; margin-top: 12px; color: var(--green-dark); }

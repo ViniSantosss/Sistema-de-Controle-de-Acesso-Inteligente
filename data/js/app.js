@@ -5,7 +5,10 @@ if (usuarioForm) {
         event.preventDefault();
 
         const nome = document.getElementById("nome").value;
-        const tipoAcesso = document.getElementById("tipoAcesso").value.toUpperCase();
+        const tipoAcesso = document
+            .getElementById("tipoAcesso")
+            .value
+            .toUpperCase();
 
         try {
             const resposta = await fetch(
@@ -36,6 +39,7 @@ if (usuarioForm) {
     });
 }
 
+
 async function carregarUsuarios() {
     try {
         const resposta = await fetch("/api/usuarios");
@@ -51,21 +55,47 @@ async function carregarUsuarios() {
         lista.innerHTML = "";
 
         usuarios.forEach(usuario => {
+
             const linha = document.createElement("tr");
 
             linha.innerHTML = `
                 <td>${usuario.nome}</td>
-                <td>Não cadastrada</td>
-                <td>${usuario.tipoAcesso}</td>
+
                 <td>
-                    ${usuario.ativo ? "Ativo" : "Desativado"}
-                    ${
-                        usuario.ativo
-                            ? `<button type="button" onclick="desativarUsuario(${usuario.id})">
-                                Desativar
-                               </button>`
-                            : ""
-                    }
+                    ${usuario.credencialNfc || "Não cadastrada"}
+                </td>
+
+                <td>
+                    ${usuario.tipoAcesso}
+                </td>
+
+                <td>
+                    <div class="user-status">
+                        <span>${usuario.ativo ? "Ativo" : "Desativado"}</span>
+
+                        <div class="user-actions">
+                            ${
+                                usuario.ativo
+                                    ? `
+                                        <button
+                                            type="button"
+                                            onclick="desativarUsuario(${usuario.id})"
+                                        >
+                                            Desativar
+                                        </button>
+                                      `
+                                    : ""
+                            }
+
+                            <button
+                                class="button-delete"
+                                type="button"
+                                onclick="excluirUsuario(${usuario.id})"
+                            >
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
                 </td>
             `;
 
@@ -76,6 +106,7 @@ async function carregarUsuarios() {
         console.error("Erro ao carregar usuários:", erro);
     }
 }
+
 
 async function desativarUsuario(id) {
     try {
@@ -99,5 +130,30 @@ async function desativarUsuario(id) {
         console.error("Erro ao desativar usuário:", erro);
     }
 }
+
+
+async function excluirUsuario(id) {
+    try {
+        const resposta = await fetch(
+            `/api/usuarios?id=${id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+            console.error(dados.erro);
+            return;
+        }
+
+        carregarUsuarios();
+
+    } catch (erro) {
+        console.error("Erro ao excluir usuário:", erro);
+    }
+}
+
 
 carregarUsuarios();
