@@ -1,4 +1,5 @@
 #include "routes/userRoutes.h"
+#include "telegram/telegramBot.h"
 
 struct Usuario {
     int id;
@@ -50,6 +51,8 @@ void configurarRotasUsuarios(WebServer& server) {
         quantidadeUsuarios++;
         proximoId++;
 
+        notificarUsuarioCadastrado(nome);
+
         server.send(
             201,
             "application/json",
@@ -73,8 +76,8 @@ void configurarRotasUsuarios(WebServer& server) {
             json += "\"id\":" + String(usuarios[i].id) + ",";
             json += "\"nome\":\"" + usuarios[i].nome + "\",";
             json += "\"tipoAcesso\":\"" + usuarios[i].tipoAcesso + "\",";
-            json += "\"ativo\":" + String(usuarios[i].ativo ? "true" : "false");
-            json += "\"credencialNfc\":\"" + usuarios[i].credencialNFC + "\",";
+            json += "\"ativo\":" + String(usuarios[i].ativo ? "true" : "false") + ",";
+            json += "\"credencialNfc\":\"" + usuarios[i].credencialNFC + "\"";
             json += "}";
         }
 

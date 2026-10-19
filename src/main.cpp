@@ -7,10 +7,13 @@
 #include "routes/authRoutes.h"
 #include "routes/pageRoutes.h"
 #include "routes/userRoutes.h"
+#include "telegram/telegramBot.h"
+#include "routes/telegramRoutes.h"
+#include "secrets.h"
 
 const int LED_PIN = 2;
-const char* ssid = "busquem comer cimento";
-const char* password = "123456788sixseven";
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 WebServer server(80);
 
@@ -52,6 +55,8 @@ void setup() {
     configurarRotasAuth(server);
     configurarRotasPaginas(server);
     configurarRotasUsuarios(server);
+    configurarRotasTelegram(server);
+    iniciarTelegram();
 
     server.begin();
 
