@@ -250,5 +250,70 @@ if (deepSleepButton) {
     });
 }
 
+async function carregarPerformance() {
+    try {
+        const resposta = await fetch("/api/performance");
+        const performance = await resposta.json();
+
+        const tempoResposta = document.getElementById("tempoResposta");
+        const core0 = document.getElementById("core0");
+        const core1 = document.getElementById("core1");
+        const flash = document.getElementById("flash");
+        const ram = document.getElementById("ram");
+        
+        if (tempoResposta) {
+            tempoResposta.textContent = performance.tempoResposta.toFixed(1);
+        }
+        
+        if (core0) {
+            core0.textContent = performance.core0.toFixed(1);
+        }
+
+        if (core1) {
+            core1.textContent = performance.core1.toFixed(1);
+        }
+
+        if (flash) {
+            const usadaMB =
+                performance.flashUsada / 1024 / 1024;
+
+            const totalMB =
+                performance.flashTotal / 1024 / 1024;
+
+            const porcentagem =
+                (performance.flashUsada /
+                    performance.flashTotal) * 100;
+
+            flash.textContent =
+                `${usadaMB.toFixed(2)} MB / ` +
+                `${totalMB.toFixed(2)} MB ` +
+                `(${porcentagem.toFixed(1)}%)`;
+        }
+
+        if (ram) {
+            const usadaMB =
+                performance.ramUsada / 1024 / 1024;
+
+            const totalMB =
+                performance.ramTotal / 1024 / 1024;
+
+            const porcentagem =
+                (performance.ramUsada /
+                    performance.ramTotal) * 100;
+
+            ram.textContent =
+                `${usadaMB.toFixed(2)} MB / ` +
+                `${totalMB.toFixed(2)} MB ` +
+                `(${porcentagem.toFixed(1)}%)`;
+        }
+
+    } catch (erro) {
+        console.error("Erro ao carregar performance:", erro);
+    }
+}
+
+carregarPerformance();
 carregarUsuarios();
 carregarPainel();
+
+setInterval(carregarPerformance, 1000);

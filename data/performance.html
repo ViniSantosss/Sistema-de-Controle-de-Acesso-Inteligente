@@ -15,11 +15,35 @@
             <span class="brand-mark" aria-hidden="true">CA</span>
             <span>Controle de Acesso</span>
         </a>
+
         <nav class="site-nav" aria-label="Navegação principal">
-            <a href="/panel.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#layout-dashboard"></use></svg><span>Painel</span></a>
-            <a href="/users.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users-round"></use></svg><span>Usuários</span></a>
-            <a href="/config.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Configurações</span></a>
-            <a href="/performance.html" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"></use></svg><span>Performance</span></a>
+            <a href="/panel.html">
+                <svg class="icon" aria-hidden="true">
+                    <use href="/icons.svg#layout-dashboard"></use>
+                </svg>
+                <span>Painel</span>
+            </a>
+
+            <a href="/users.html">
+                <svg class="icon" aria-hidden="true">
+                    <use href="/icons.svg#users-round"></use>
+                </svg>
+                <span>Usuários</span>
+            </a>
+
+            <a href="/config.html">
+                <svg class="icon" aria-hidden="true">
+                    <use href="/icons.svg#settings"></use>
+                </svg>
+                <span>Configurações</span>
+            </a>
+
+            <a href="/performance.html" aria-current="page">
+                <svg class="icon" aria-hidden="true">
+                    <use href="/icons.svg#chart-no-axes-column-increasing"></use>
+                </svg>
+                <span>Performance</span>
+            </a>
         </nav>
     </header>
 
@@ -30,25 +54,47 @@
         </div>
 
         <div class="metrics-grid">
-        <section class="page-section metric-section">
-            <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#cpu"></use></svg>Processador</h3>
-            <p>Uso da CPU: <span id="cpu">--</span></p>
-        </section>
+            <section class="page-section metric-section">
+                <h3>
+                    <svg class="icon section-icon" aria-hidden="true">
+                        <use href="/icons.svg#cpu"></use>
+                    </svg>
+                    Processador
+                </h3>
 
-        <section class="page-section metric-section">
-            <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#memory-stick"></use></svg>Memória</h3>
-            <p>RAM livre: <span id="ram">--</span></p>
-        </section>
+                <p>Uso do Core 0: <span id="core0">--</span>%</p>
+                <p>Uso do Core 1: <span id="core1">--</span>%</p>
+            </section>
 
-        <section class="page-section metric-section">
-            <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#hard-drive"></use></svg>Armazenamento</h3>
-            <p>Flash utilizada: <span id="flash">--</span></p>
-        </section>
+            <section class="page-section metric-section">
+                <h3>
+                    <svg class="icon section-icon" aria-hidden="true">
+                        <use href="/icons.svg#memory-stick"></use>
+                    </svg>
+                    Memória
+                </h3>
+                <p>RAM utilizada: <span id="ram">--</span></p>
+            </section>
 
-        <section class="page-section metric-section">
-            <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#activity"></use></svg>Comunicação</h3>
-            <p>Tempo de resposta: <span id="tempoResposta">--</span></p>
-        </section>
+            <section class="page-section metric-section">
+                <h3>
+                    <svg class="icon section-icon" aria-hidden="true">
+                        <use href="/icons.svg#hard-drive"></use>
+                    </svg>
+                    Armazenamento
+                </h3>
+                <p>Flash utilizada: <span id="flash">--</span></p>
+            </section>
+
+            <section class="page-section metric-section">
+                <h3>
+                    <svg class="icon section-icon" aria-hidden="true">
+                        <use href="/icons.svg#activity"></use>
+                    </svg>
+                    Comunicação
+                </h3>
+                <p>Tempo de resposta: <span id="tempoResposta">--</span></p>
+            </section>
         </div>
     </main>
 

@@ -11,6 +11,7 @@
 #include "telegram/telegramBot.h"
 #include "routes/telegramRoutes.h"
 #include "storage/userStorage.h"
+#include "routes/performanceRoutes.h"
 #include "secrets.h"
 
 const int LED_PIN = 2;
@@ -54,6 +55,8 @@ void setup() {
     configurarRotasUsuarios(server);
     configurarRotasTelegram(server);
     configurarRotasDeepSleep(server);
+    inicializarMonitorPerformance();
+    configurarRotasPerformance(server);
     iniciarTelegram();
 
     server.begin();
