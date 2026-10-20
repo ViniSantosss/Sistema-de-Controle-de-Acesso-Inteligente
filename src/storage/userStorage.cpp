@@ -21,13 +21,13 @@ void inicializarArmazenamentoUsuarios() {
     carregarUsuarios();
 }
 
-void salvarUsuarios() {
+bool salvarUsuarios() {
 
     File arquivo = LittleFS.open("/usuarios.json", "w");
 
     if (!arquivo) {
         Serial.println("Erro ao abrir usuarios.json para escrita.");
-        return;
+        return false;
     }
 
     JsonDocument documento;
@@ -43,11 +43,18 @@ void salvarUsuarios() {
         usuario["credencialNFC"] = usuarios[i].credencialNFC;
     }
 
-    serializeJson(documento, arquivo);
+    size_t bytesEsperados = measureJson(documento);
+    size_t bytesGravados = serializeJson(documento, arquivo);
 
     arquivo.close();
 
+    if (bytesGravados != bytesEsperados) {
+        Serial.println("Erro ao gravar todos os usuarios em usuarios.json.");
+        return false;
+    }
+
     Serial.println("Usuarios salvos.");
+    return true;
 }
 
 void carregarUsuarios() {

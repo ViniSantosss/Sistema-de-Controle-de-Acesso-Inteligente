@@ -12,6 +12,8 @@
 #include "routes/telegramRoutes.h"
 #include "storage/userStorage.h"
 #include "routes/performanceRoutes.h"
+#include "nfc/nfcManager.h"
+#include "tasks/core1Tasks.h"
 #include "secrets.h"
 
 const int LED_PIN = 2;
@@ -47,6 +49,7 @@ void setup() {
     Serial.println(WiFi.localIP());
 
     inicializarArmazenamentoUsuarios();
+    inicializarNFC();
 
     configurarRotasStatus(server);
     configurarRotasLed(server, LED_PIN);
@@ -60,6 +63,7 @@ void setup() {
     iniciarTelegram();
 
     server.begin();
+    iniciarCore1Task();
 
     Serial.println("Servidor Web iniciado!");
 }

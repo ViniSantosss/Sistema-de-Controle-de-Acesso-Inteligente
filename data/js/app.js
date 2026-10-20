@@ -70,32 +70,37 @@ async function carregarUsuarios() {
                 </td>
 
                 <td>
-                    <div class="user-status">
-                        <span>${usuario.ativo ? "Ativo" : "Desativado"}</span>
+                    <div class="user-actions">
 
-                        <div class="user-actions">
-                            ${
-                                usuario.ativo
-                                    ? `
-                                        <button
-                                            type="button"
-                                            onclick="desativarUsuario(${usuario.id})"
-                                        >
-                                            Desativar
-                                        </button>
-                                      `
-                                    : ""
-                            }
+    ${
+        usuario.ativo
+            ? `
+                <button
+                    type="button"
+                    onclick="atribuirChaveNFC(${usuario.id})"
+                >
+                    Atribuir chave
+                </button>
 
-                            <button
-                                class="button-delete"
-                                type="button"
-                                onclick="excluirUsuario(${usuario.id})"
-                            >
-                                Excluir
-                            </button>
-                        </div>
-                    </div>
+                <button
+                    type="button"
+                    onclick="desativarUsuario(${usuario.id})"
+                >
+                    Desativar
+                </button>
+              `
+            : ""
+    }
+
+    <button
+        class="button-delete"
+        type="button"
+        onclick="excluirUsuario(${usuario.id})"
+    >
+        Excluir
+    </button>
+
+</div>
                 </td>
             `;
 
@@ -104,6 +109,36 @@ async function carregarUsuarios() {
 
     } catch (erro) {
         console.error("Erro ao carregar usuários:", erro);
+    }
+}
+
+async function atribuirChaveNFC(id) {
+
+    try {
+
+        const resposta = await fetch(
+            `/api/usuarios/aguardar-chave?id=${id}`,
+            {
+                method: "POST"
+            }
+        );
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+            console.error(dados.erro);
+            return;
+        }
+
+        alert(dados.mensagem);
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao iniciar atribuição da chave NFC:",
+            erro
+        );
+
     }
 }
 
