@@ -21,10 +21,84 @@
         </nav>
     </header>
     <main class="page-content">
-        <div class="page-heading">
-            <p class="eyebrow">VISÃO GERAL</p>
-            <h1>Painel do sistema</h1>
+
+    <div class="page-heading">
+        <p class="eyebrow">VISÃO GERAL</p>
+        <h1>Painel do sistema</h1>
+    </div>
+
+    <section class="dashboard-grid">
+
+        <div class="dashboard-card">
+            <span class="dashboard-label">Usuários cadastrados</span>
+            <strong id="totalUsuarios">--</strong>
         </div>
-    </main>
+
+        <div class="dashboard-card">
+            <span class="dashboard-label">Usuários ativos</span>
+            <strong id="usuariosAtivos">--</strong>
+        </div>
+
+        <div class="dashboard-card">
+            <span class="dashboard-label">Usuários desativados</span>
+            <strong id="usuariosDesativados">--</strong>
+        </div>
+
+        <div class="dashboard-card">
+            <span class="dashboard-label">Status do sistema</span>
+            <strong id="statusSistema">--</strong>
+        </div>
+
+    </section>
+
+    <section class="page-section">
+
+        <h3>
+            <svg class="icon section-icon" aria-hidden="true">
+                <use href="/icons.svg#wifi"></use>
+            </svg>
+            Conectividade
+        </h3>
+
+        <p>
+            Wi-Fi:
+            <strong id="painelWifi">--</strong>
+        </p>
+
+        <p>
+            IP do ESP32:
+            <strong id="painelIp">--</strong>
+        </p>
+
+    </section>
+
+    <section class="page-section">
+
+        <h3>
+            <svg class="icon section-icon" aria-hidden="true">
+                <use href="/icons.svg#layout-dashboard"></use>
+            </svg>
+            Acesso rápido
+        </h3>
+
+        <div class="dashboard-actions">
+
+            <a href="/users.html">
+                Gerenciar usuários
+            </a>
+
+            <a href="/config.html">
+                Configurações
+            </a>
+
+            <a href="/performance.html">
+                Performance
+            </a>
+
+        </div>
+
+    </section>
+
+</main>
 </body>
 </html>

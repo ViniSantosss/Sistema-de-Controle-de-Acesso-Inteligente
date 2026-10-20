@@ -155,5 +155,59 @@ async function excluirUsuario(id) {
     }
 }
 
+async function carregarPainel() {
+    try {
+        const respostaUsuarios = await fetch("/api/usuarios");
+        const usuarios = await respostaUsuarios.json();
+
+        const total = usuarios.length;
+        const ativos = usuarios.filter(usuario => usuario.ativo).length;
+        const desativados = usuarios.filter(usuario => !usuario.ativo).length;
+
+        const totalUsuarios = document.getElementById("totalUsuarios");
+        const usuariosAtivos = document.getElementById("usuariosAtivos");
+        const usuariosDesativados = document.getElementById("usuariosDesativados");
+
+        if (totalUsuarios) {
+            totalUsuarios.textContent = total;
+        }
+
+        if (usuariosAtivos) {
+            usuariosAtivos.textContent = ativos;
+        }
+
+        if (usuariosDesativados) {
+            usuariosDesativados.textContent = desativados;
+        }
+
+        const respostaStatus = await fetch("/api/status");
+        const status = await respostaStatus.json();
+
+        const statusSistema = document.getElementById("statusSistema");
+        const painelWifi = document.getElementById("painelWifi");
+        const painelIp = document.getElementById("painelIp");
+
+        if (statusSistema) {
+            statusSistema.textContent = status.status === "online"
+                ? "Online"
+                : "Offline";
+        }
+
+        if (painelWifi) {
+            painelWifi.textContent = status.wifi
+                ? "Conectado"
+                : "Desconectado";
+        }
+
+        if (painelIp) {
+            painelIp.textContent = status.ip;
+        }
+
+    } catch (erro) {
+        console.error("Erro ao carregar painel:", erro);
+    }
+}
+
 
 carregarUsuarios();
+carregarPainel();

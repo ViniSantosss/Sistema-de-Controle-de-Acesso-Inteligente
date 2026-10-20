@@ -30,23 +30,36 @@
         </div>
 
         <section class="page-section">
-            <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg>Sistema</h3>
+    <h3>
+        <svg class="icon section-icon" aria-hidden="true">
+            <use href="/icons.svg#settings"></use>
+        </svg>
+        Sistema
+    </h3>
 
-            <div class="settings-form">
-                <label for="nomeSistema">Nome do sistema</label>
-                <input type="text" id="nomeSistema">
+    <div class="settings-form">
 
-                <label for="modo">Modo de funcionamento</label>
-                <select id="modo">
-                    <option value="normal">Normal</option>
-                    <option value="offline">Offline</option>
-                </select>
+        <label for="modo">Modo de funcionamento</label>
 
-                <button id="salvarConfiguracoes">
-                    Salvar configurações
-                </button>
-            </div>
-        </section>
+        <select id="modo">
+            <option value="normal">Normal</option>
+            <option value="deep_sleep">Deep Sleep</option>
+        </select>
+
+        <button id="salvarModo">
+            Salvar modo de funcionamento
+        </button>
+
+        <hr>
+
+        <label>Deep Sleep</label>
+
+        <button id="ativarDeepSleep">
+            Entrar em Deep Sleep
+        </button>
+
+    </div>
+</section>
 
         <section class="page-section">
             <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#wifi"></use></svg>Rede</h3>
