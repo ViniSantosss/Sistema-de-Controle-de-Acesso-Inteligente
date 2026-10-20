@@ -17,11 +17,12 @@ static uint32_t ultimoIdleCore0 = 0;
 static uint32_t ultimoIdleCore1 = 0;
 static bool monitorPerformanceAtivo = false;
 
-static void tickHookCore0() {
+// Tick hooks may run while the flash cache is disabled.
+static void IRAM_ATTR tickHookCore0() {
     totalTicksCore0++;
 }
 
-static void tickHookCore1() {
+static void IRAM_ATTR tickHookCore1() {
     totalTicksCore1++;
 }
 

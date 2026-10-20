@@ -1,11 +1,9 @@
 #include "routes/authRoutes.h"
-
-const char* USUARIO = "admin";
-const char* SENHA = "1234";
+#include "secrets.h"
 
 void configurarRotasAuth(WebServer& server) {
 
-    server.on("/api/login", HTTP_GET, [&server]() {
+    server.on("/api/login", HTTP_POST, [&server]() {
 
         if (!server.hasArg("usuario") || !server.hasArg("senha")) {
             server.send(
@@ -19,7 +17,7 @@ void configurarRotasAuth(WebServer& server) {
         String usuario = server.arg("usuario");
         String senha = server.arg("senha");
 
-        if (usuario == USUARIO && senha == SENHA) {
+        if (usuario == ESP32_USER && senha == ESP32_PASSWORD) {
             server.send(
                 200,
                 "application/json",
@@ -29,7 +27,7 @@ void configurarRotasAuth(WebServer& server) {
             server.send(
                 401,
                 "application/json",
-                "{\"autenticado\":false}"
+                "{\"autenticado\":false,\"erro\":\"Usuário ou senha inválidos\"}"
             );
         }
     });

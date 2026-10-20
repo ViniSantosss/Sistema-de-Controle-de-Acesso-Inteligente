@@ -1,5 +1,8 @@
 #include "nfc/nfcManager.h"
 
+#define NFC_HABILITADO 0
+
+#if NFC_HABILITADO
 #include <Wire.h>
 #include <Adafruit_PN532.h>
 
@@ -10,9 +13,11 @@
 #define PN532_RESET 3
 
 Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET, &Wire);
+#endif
 
 void inicializarNFC() {
 
+#if NFC_HABILITADO
     Wire.begin(SDA_PIN, SCL_PIN);
 
     nfc.begin();
@@ -29,10 +34,14 @@ void inicializarNFC() {
     nfc.SAMConfig();
 
     Serial.println("Leitor NFC pronto.");
+#else
+    Serial.println("Leitor NFC desativado temporariamente.");
+#endif
 }
 
 bool lerUID(String& uid) {
 
+#if NFC_HABILITADO
     uint8_t success;
 
     uint8_t uidBytes[7];
@@ -67,4 +76,8 @@ bool lerUID(String& uid) {
     uid.toUpperCase();
 
     return true;
+#else
+    (void)uid;
+    return false;
+#endif
 }

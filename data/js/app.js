@@ -1,5 +1,38 @@
 const usuarioForm = document.getElementById("usuarioForm");
 
+const loginForm = document.getElementById("loginForm");
+
+if (loginForm) {
+    loginForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const mensagem = document.getElementById("mensagem");
+        const usuario = document.getElementById("usuario").value;
+        const senha = document.getElementById("senha").value;
+
+        try {
+            const resposta = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+                },
+                body: new URLSearchParams({ usuario, senha })
+            });
+            const dados = await resposta.json();
+
+            if (!resposta.ok) {
+                mensagem.textContent = dados.erro || "Não foi possível entrar.";
+                return;
+            }
+
+            window.location.replace("/panel.html");
+        } catch (erro) {
+            console.error("Erro ao realizar login:", erro);
+            mensagem.textContent = "Não foi possível conectar ao servidor.";
+        }
+    });
+}
+
 if (usuarioForm) {
     usuarioForm.addEventListener("submit", async function (event) {
         event.preventDefault();
@@ -347,8 +380,15 @@ async function carregarPerformance() {
     }
 }
 
-carregarPerformance();
-carregarUsuarios();
-carregarPainel();
+if (document.getElementById("tempoResposta")) {
+    carregarPerformance();
+    setInterval(carregarPerformance, 1000);
+}
 
-setInterval(carregarPerformance, 1000);
+if (document.getElementById("listaUsuarios")) {
+    carregarUsuarios();
+}
+
+if (document.getElementById("totalUsuarios")) {
+    carregarPainel();
+}

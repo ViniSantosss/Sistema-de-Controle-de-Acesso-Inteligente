@@ -49,6 +49,8 @@ Essas funcionalidades fazem parte do escopo proposto para o projeto da disciplin
 
 > **Importante:** os componentes acima, com exceção do ESP32, ainda não estão disponíveis neste estágio do desenvolvimento. O código não deve assumir que esses componentes já estão conectados ou disponíveis para testes.
 
+> **NFC temporariamente desativado:** enquanto o PN532 não estiver conectado, a inicialização e as leituras NFC permanecem desativadas em `src/nfc/nfcManager.cpp` (`NFC_HABILITADO 0`). Para reativar o leitor quando ele estiver conectado, altere o valor para `1`.
+
 ---
 
 ## Software
@@ -189,6 +191,17 @@ O objetivo inicial é fazer o ESP32:
 ---
 
 # 5. Estratégia de desenvolvimento
+
+## Enviar e acessar a interface web
+
+Depois de gravar o firmware, envie também os arquivos da pasta `data/` para o LittleFS:
+
+```bash
+py -m platformio run --target upload
+py -m platformio run --target uploadfs
+```
+
+O computador ou celular usado para acessar a interface deve estar conectado à mesma rede local do ESP32. Abra no navegador `http://<IP exibido no monitor serial>/` (por exemplo, `http://192.168.1.100/`), usando `http://` e não `https://`.
 
 O desenvolvimento deve seguir uma evolução incremental.
 

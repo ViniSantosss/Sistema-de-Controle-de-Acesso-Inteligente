@@ -229,6 +229,7 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 
 .site-nav {
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 4px;
@@ -238,11 +239,13 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
     display: inline-flex;
     align-items: center;
     gap: 7px;
+    min-height: 34px;
     padding: 8px 10px;
     border-radius: 7px;
     color: #71858a;
     font-size: 12px;
     font-weight: 600;
+    line-height: 1;
     text-decoration: none;
     transition: background-color 150ms ease, color 150ms ease;
 }
