@@ -50,13 +50,25 @@
             Salvar modo de funcionamento
         </button>
 
-        <hr>
+        <hr class="deep-sleep-divider">
 
-        <label>Deep Sleep</label>
+        <div class="deep-sleep-control" id="deepSleepControl">
+            <div class="deep-sleep-heading">
+                <div>
+                    <h4>Deep Sleep</h4>
+                    <p>Reduz o consumo de energia e interrompe o acesso ao dispositivo.</p>
+                </div>
+                <span class="deep-sleep-status is-off" id="deepSleepStatus" aria-live="polite">
+                    <span class="deep-sleep-status-dot" aria-hidden="true"></span>
+                    Desligado
+                </span>
+            </div>
 
-        <button id="ativarDeepSleep">
-            Entrar em Deep Sleep
-        </button>
+            <button class="deep-sleep-button" id="ativarDeepSleep" type="button">
+                Ativar Deep Sleep
+            </button>
+            <p class="deep-sleep-message" id="deepSleepMessage" role="status" aria-live="polite"></p>
+        </div>
 
     </div>
 </section>

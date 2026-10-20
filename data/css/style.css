@@ -308,9 +308,104 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 
 .settings-form {
     display: grid;
-    max-width: 520px;
+    width: 100%;
     gap: 7px;
 }
+
+.deep-sleep-divider {
+    width: 100%;
+    margin: 13px 0 9px;
+    border: 0;
+    border-top: 1px solid var(--line);
+}
+
+.deep-sleep-control {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.92);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 5px 16px rgba(45, 94, 94, 0.055), inset 0 1px 0 #fff;
+}
+
+.deep-sleep-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.deep-sleep-heading h4 {
+    margin: 0 0 5px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.deep-sleep-heading p {
+    max-width: 360px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.deep-sleep-status {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid #e8c2bf;
+    border-radius: 999px;
+    color: #a33d35;
+    background: #fff1ef;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+.deep-sleep-status.is-on {
+    border-color: #b9d9cb;
+    color: #23684f;
+    background: #edf8f1;
+}
+
+.deep-sleep-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #cf584f;
+    box-shadow: 0 0 0 3px rgba(207, 88, 79, 0.14);
+}
+
+.deep-sleep-status.is-on .deep-sleep-status-dot {
+    background: #43a476;
+    box-shadow: 0 0 0 3px rgba(67, 164, 118, 0.14);
+}
+
+#ativarDeepSleep {
+    min-height: 42px;
+    margin: 0;
+    justify-self: start;
+}
+
+#ativarDeepSleep:disabled {
+    cursor: default;
+    opacity: 1;
+}
+
+.deep-sleep-message {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.deep-sleep-message:empty { display: none; }
+.deep-sleep-message.is-error { color: #a33d35; }
 
 .page-section label {
     margin-top: 4px;

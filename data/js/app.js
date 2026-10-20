@@ -208,6 +208,47 @@ async function carregarPainel() {
     }
 }
 
+const deepSleepButton = document.getElementById("ativarDeepSleep");
+
+if (deepSleepButton) {
+    const deepSleepStatus = document.getElementById("deepSleepStatus");
+    const deepSleepMessage = document.getElementById("deepSleepMessage");
+    const deepSleepControl = document.getElementById("deepSleepControl");
+
+    deepSleepButton.addEventListener("click", async function () {
+        deepSleepButton.disabled = true;
+        deepSleepButton.textContent = "Ativando Deep Sleep...";
+        deepSleepMessage.textContent = "";
+        deepSleepMessage.classList.remove("is-error");
+
+        try {
+            const resposta = await fetch("/api/deep-sleep", {
+                method: "POST"
+            });
+            const dados = await resposta.json();
+
+            if (!resposta.ok) {
+                throw new Error(dados.erro || "Não foi possível ativar o Deep Sleep.");
+            }
+
+            deepSleepStatus.classList.remove("is-off");
+            deepSleepStatus.classList.add("is-on");
+            deepSleepStatus.innerHTML = `
+                <span class="deep-sleep-status-dot" aria-hidden="true"></span>
+                Ligado
+            `;
+            deepSleepControl.classList.add("is-on");
+            deepSleepButton.textContent = "Deep Sleep ligado";
+            deepSleepMessage.textContent = "Para sair do Deep Sleep, reinicie o ESP32.";
+        } catch (erro) {
+            console.error("Erro ao ativar Deep Sleep:", erro);
+            deepSleepButton.disabled = false;
+            deepSleepButton.textContent = "Ativar Deep Sleep";
+            deepSleepMessage.textContent = erro.message;
+            deepSleepMessage.classList.add("is-error");
+        }
+    });
+}
 
 carregarUsuarios();
 carregarPainel();

@@ -3,6 +3,7 @@
 #include <WebServer.h>
 
 #include "routes/statusRoutes.h"
+#include "routes/deepSleepRoutes.h"
 #include "routes/ledRoutes.h"
 #include "routes/authRoutes.h"
 #include "routes/pageRoutes.h"
@@ -52,6 +53,7 @@ void setup() {
     configurarRotasPaginas(server);
     configurarRotasUsuarios(server);
     configurarRotasTelegram(server);
+    configurarRotasDeepSleep(server);
     iniciarTelegram();
 
     server.begin();
