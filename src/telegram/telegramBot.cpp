@@ -32,28 +32,35 @@ bool enviarMensagemTelegram(const String& mensagem) {
 
 void notificarUsuarioCadastrado(const String& nome) {
 
-    String mensagem = "Novo usuario cadastrado: " + nome;
+    String mensagem = "🔔 Novo usuario cadastrado: " + nome + " 🔔";
 
     enviarMensagemTelegram(mensagem);
 }
 
 void notificarUsuarioDesativado(const String& nome) {
 
-    String mensagem = "Usuario desativado: " + nome;
+    String mensagem = "🔔 Usuario desativado: " + nome + " 🔔";
 
     enviarMensagemTelegram(mensagem);
 }
 
 void notificarAcessoAutorizado(const String& nome) {
 
-    String mensagem = "Acesso autorizado para: " + nome;
+    String mensagem = "✅ Acesso autorizado para: " + nome + " ✅";
 
     enviarMensagemTelegram(mensagem);
 }
 
 void notificarAcessoNegado(const String& nome) {
 
-    String mensagem = "Acesso negado para: " + nome;
+    String mensagem = "❌ Acesso negado para: " + nome + " ❌";
+
+    enviarMensagemTelegram(mensagem);
+}
+
+void notificarUsuarioExcluido(const String& nome) {
+
+    String mensagem = "❌ Usuario excluido: " + nome + " ❌";
 
     enviarMensagemTelegram(mensagem);
 }

@@ -9,5 +9,6 @@ void notificarUsuarioCadastrado(const String& nome);
 void notificarUsuarioDesativado(const String& nome);
 void notificarAcessoAutorizado(const String& nome);
 void notificarAcessoNegado(const String& nome);
+void notificarUsuarioExcluido(const String& nome);
 
 #endif

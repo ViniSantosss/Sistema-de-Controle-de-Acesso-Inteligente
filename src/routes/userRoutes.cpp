@@ -155,7 +155,7 @@ void configurarRotasUsuarios(WebServer& server) {
 
             salvarUsuarios();
 
-            notificarUsuarioDesativado(nomeUsuario);
+            notificarUsuarioExcluido(nomeUsuario);
 
             server.send(
                 200,
