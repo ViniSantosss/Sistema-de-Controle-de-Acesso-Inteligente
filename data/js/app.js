@@ -9,16 +9,34 @@ if (loginForm) {
         const mensagem = document.getElementById("mensagem");
         const usuario = document.getElementById("usuario").value;
         const senha = document.getElementById("senha").value;
+        const endpoint = new URL("/api/login", window.location.href);
 
         try {
-            const resposta = await fetch("/api/login", {
+            const resposta = await fetch(endpoint, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
                 },
                 body: new URLSearchParams({ usuario, senha })
             });
-            const dados = await resposta.json();
+            const corpo = await resposta.text();
+            let dados;
+
+            try {
+                dados = JSON.parse(corpo);
+            } catch (erro) {
+                console.error("Resposta inesperada do servidor de login:", {
+                    status: resposta.status,
+                    contentType: resposta.headers.get("content-type"),
+                    corpo: corpo.slice(0, 300),
+                    erro
+                });
+                mensagem.textContent =
+                    `O servidor em ${endpoint.origin} respondeu HTTP ${resposta.status} ` +
+                    "sem JSON. Atualize o firmware e os arquivos LittleFS do ESP32; " +
+                    "atualize a página e tente novamente.";
+                return;
+            }
 
             if (!resposta.ok) {
                 mensagem.textContent = dados.erro || "Não foi possível entrar.";
@@ -28,7 +46,9 @@ if (loginForm) {
             window.location.replace("/panel.html");
         } catch (erro) {
             console.error("Erro ao realizar login:", erro);
-            mensagem.textContent = "Não foi possível conectar ao servidor.";
+            mensagem.textContent =
+                `Não foi possível acessar ${endpoint.origin}/api/login. ` +
+                "confirme que o dispositivo e seu navegador estão na mesma rede.";
         }
     });
 }
