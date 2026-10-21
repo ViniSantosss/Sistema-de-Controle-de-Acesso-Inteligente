@@ -244,17 +244,20 @@ async function excluirUsuario(id) {
 }
 
 async function carregarPainel() {
+    const totalUsuarios = document.getElementById("totalUsuarios");
+    const usuariosAtivos = document.getElementById("usuariosAtivos");
+    const usuariosDesativados = document.getElementById("usuariosDesativados");
+
     try {
         const respostaUsuarios = await fetch("/api/usuarios");
+        if (!respostaUsuarios.ok) {
+            throw new Error(`Falha ao carregar usuários: HTTP ${respostaUsuarios.status}`);
+        }
         const usuarios = await respostaUsuarios.json();
 
         const total = usuarios.length;
         const ativos = usuarios.filter(usuario => usuario.ativo).length;
         const desativados = usuarios.filter(usuario => !usuario.ativo).length;
-
-        const totalUsuarios = document.getElementById("totalUsuarios");
-        const usuariosAtivos = document.getElementById("usuariosAtivos");
-        const usuariosDesativados = document.getElementById("usuariosDesativados");
 
         if (totalUsuarios) {
             totalUsuarios.textContent = total;
@@ -267,32 +270,50 @@ async function carregarPainel() {
         if (usuariosDesativados) {
             usuariosDesativados.textContent = desativados;
         }
+    } catch (erro) {
+        console.error("Erro ao carregar usuários do painel:", erro);
+    }
+}
 
+async function carregarStatusRede() {
+    const wifiStatus = document.getElementById("wifiStatus");
+    const painelWifi = document.getElementById("painelWifi");
+    const wifiSsid = document.getElementById("wifiSsid");
+    const painelSsid = document.getElementById("painelSsid");
+    const ip = document.getElementById("ip");
+    const painelIp = document.getElementById("painelIp");
+
+    try {
         const respostaStatus = await fetch("/api/status");
+        if (!respostaStatus.ok) {
+            throw new Error(`Falha ao carregar status da rede: HTTP ${respostaStatus.status}`);
+        }
         const status = await respostaStatus.json();
 
-        const statusSistema = document.getElementById("statusSistema");
-        const painelWifi = document.getElementById("painelWifi");
-        const painelIp = document.getElementById("painelIp");
-
-        if (statusSistema) {
-            statusSistema.textContent = status.status === "online"
-                ? "Online"
-                : "Offline";
-        }
-
+        const estadoWifi = status.wifi ? "Conectado" : "Desconectado";
         if (painelWifi) {
-            painelWifi.textContent = status.wifi
-                ? "Conectado"
-                : "Desconectado";
+            painelWifi.textContent = estadoWifi;
         }
-
+        if (wifiStatus) {
+            wifiStatus.textContent = estadoWifi;
+        }
+        const nomeRede = status.wifi && status.ssid
+            ? status.ssid
+            : "Não conectado";
+        if (wifiSsid) {
+            wifiSsid.textContent = nomeRede;
+        }
+        if (painelSsid) {
+            painelSsid.textContent = nomeRede;
+        }
         if (painelIp) {
             painelIp.textContent = status.ip;
         }
-
+        if (ip) {
+            ip.textContent = status.ip;
+        }
     } catch (erro) {
-        console.error("Erro ao carregar painel:", erro);
+        console.error("Erro ao carregar status da rede:", erro);
     }
 }
 
@@ -411,4 +432,13 @@ if (document.getElementById("listaUsuarios")) {
 
 if (document.getElementById("totalUsuarios")) {
     carregarPainel();
+}
+
+if (
+    document.getElementById("wifiStatus") ||
+    document.getElementById("painelWifi") ||
+    document.getElementById("wifiSsid") ||
+    document.getElementById("painelSsid")
+) {
+    carregarStatusRede();
 }

@@ -16,10 +16,10 @@
             <span>Controle de Acesso</span>
         </a>
         <nav class="site-nav" aria-label="Navegação principal">
-            <a href="/panel.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#layout-dashboard"></use></svg><span>Painel</span></a>
-            <a href="/users.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users-round"></use></svg><span>Usuários</span></a>
-            <a href="/config.html" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Configurações</span></a>
-            <a href="/performance.html"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"></use></svg><span>Performance</span></a>
+            <a href="/panel.html"><span>Painel</span></a>
+            <a href="/users.html"><span>Usuários</span></a>
+            <a href="/config.html" aria-current="page"><span>Configurações</span></a>
+            <a href="/performance.html"><span>Performance</span></a>
         </nav>
     </header>
 
@@ -30,12 +30,7 @@
         </div>
 
         <section class="page-section">
-    <h3>
-        <svg class="icon section-icon" aria-hidden="true">
-            <use href="/icons.svg#settings"></use>
-        </svg>
-        Sistema
-    </h3>
+    <h3>Sistema</h3>
 
     <div class="settings-form">
         <div class="deep-sleep-control" id="deepSleepControl">
@@ -60,9 +55,10 @@
 </section>
 
         <section class="page-section">
-            <h3><svg class="icon section-icon" aria-hidden="true"><use href="/icons.svg#wifi"></use></svg>Rede</h3>
+            <h3>Rede</h3>
 
             <p>Wi-Fi: <span id="wifiStatus">--</span></p>
+            <p>Rede conectada: <span id="wifiSsid">--</span></p>
             <p>IP do ESP32: <span id="ip">--</span></p>
         </section>
 
