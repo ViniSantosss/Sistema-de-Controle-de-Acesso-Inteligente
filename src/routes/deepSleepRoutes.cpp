@@ -6,6 +6,7 @@
 void configurarRotasDeepSleep(WebServer& server) {
 
     server.on("/api/deep-sleep", HTTP_POST, [&server]() {
+        Serial.println("Ativando Deep Sleep...");
 
         server.send(
             200,
@@ -13,6 +14,8 @@ void configurarRotasDeepSleep(WebServer& server) {
             "{\"mensagem\":\"ESP32 entrando em Deep Sleep\"}"
         );
 
+        Serial.println("Deep Sleep Ativado.");
+        Serial.flush();
         delay(100);
 
         esp_deep_sleep_start();
