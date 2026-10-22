@@ -18,8 +18,11 @@
         <nav class="site-nav" aria-label="Navegação principal">
             <a href="/panel.html"><span>Painel</span></a>
             <a href="/users.html"><span>Usuários</span></a>
-            <a href="/config.html" aria-current="page"><span>Configurações</span></a>
             <a href="/performance.html"><span>Performance</span></a>
+            <a href="/config.html" aria-current="page"><span>Configurações</span></a>
+            <a class="about-nav-link" href="/about.html" aria-label="Sobre" title="Sobre">
+                <span aria-hidden="true">?</span>
+            </a>
         </nav>
     </header>
 
@@ -60,6 +63,31 @@
             <p>Wi-Fi: <span id="wifiStatus">--</span></p>
             <p>Rede conectada: <span id="wifiSsid">--</span></p>
             <p>IP do ESP32: <span id="ip">--</span></p>
+        </section>
+
+        <section class="page-section ota-section" aria-labelledby="otaHeading">
+            <h3 id="otaHeading">Atualização de Firmware / OTA</h3>
+            <p>
+                Entre com a conta administrativa e selecione um firmware
+                <code>.bin</code> compilado para este projeto.
+            </p>
+
+            <form id="otaForm" enctype="multipart/form-data">
+                <label for="otaFirmware">Arquivo de firmware</label>
+                <input
+                    type="file"
+                    id="otaFirmware"
+                    name="firmware"
+                    accept=".bin,application/octet-stream"
+                    required
+                >
+                <button type="submit" id="otaSubmit">Atualizar firmware</button>
+                <progress id="otaProgress" max="100" value="0" hidden></progress>
+            </form>
+
+            <p id="otaMessage" class="ota-message" role="status" aria-live="polite">
+                O dispositivo reiniciará após a gravação ser concluída.
+            </p>
         </section>
 
     </main>

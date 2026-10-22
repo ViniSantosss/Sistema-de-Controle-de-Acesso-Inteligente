@@ -4,5 +4,6 @@
 #include <WebServer.h>
 
 void configurarRotasDeepSleep(WebServer& server);
+void processarDeepSleepPendente();
 
 #endif

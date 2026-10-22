@@ -1,4 +1,4 @@
-#include "routes/ledRoutes.h"
+#include <WebServer.h>
 
 void configurarRotasLed(WebServer& server, int ledPin) {
     server.on("/api/led/on", HTTP_GET, [&server, ledPin]() {

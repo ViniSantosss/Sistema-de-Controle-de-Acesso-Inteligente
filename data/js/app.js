@@ -54,20 +54,55 @@ if (loginForm) {
 }
 
 if (usuarioForm) {
+    const tipoAcessoInput = document.getElementById("tipoAcesso");
+    const validadeCampos = document.getElementById("validadeCampos");
+    const dataExpiracaoInput = document.getElementById("dataExpiracao");
+    const usuarioIdInput = document.getElementById("usuarioId");
+    const botaoCadastro = usuarioForm.querySelector('button[type="submit"]');
+    const botaoCancelarEdicao = document.getElementById("cancelarEdicao");
+
+    function atualizarCamposValidade() {
+        const temporario = tipoAcessoInput.value.toUpperCase() === "TEMPORARIO";
+        validadeCampos.hidden = !temporario;
+        dataExpiracaoInput.required = temporario;
+        if (!temporario) {
+            dataExpiracaoInput.value = "";
+        }
+    }
+
+    function cancelarEdicaoUsuario() {
+        usuarioForm.reset();
+        usuarioIdInput.value = "";
+        botaoCadastro.textContent = "Cadastrar usuário";
+        botaoCancelarEdicao.hidden = true;
+        atualizarCamposValidade();
+    }
+
+    tipoAcessoInput.addEventListener("change", atualizarCamposValidade);
+    botaoCancelarEdicao.addEventListener("click", cancelarEdicaoUsuario);
+    atualizarCamposValidade();
+
     usuarioForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         const nome = document.getElementById("nome").value;
-        const tipoAcesso = document
-            .getElementById("tipoAcesso")
-            .value
-            .toUpperCase();
+        const tipoAcesso = tipoAcessoInput.value.toUpperCase();
+        const usuarioId = usuarioIdInput.value;
+        const parametros = new URLSearchParams({ nome, tipoAcesso });
+
+        if (tipoAcesso === "TEMPORARIO") {
+            parametros.set("dataExpiracao", dataExpiracaoInput.value);
+        }
+
+        if (usuarioId) {
+            parametros.set("id", usuarioId);
+        }
 
         try {
             const resposta = await fetch(
-                `/api/usuarios?nome=${encodeURIComponent(nome)}&tipoAcesso=${encodeURIComponent(tipoAcesso)}`,
+                `/api/usuarios?${parametros.toString()}`,
                 {
-                    method: "POST"
+                    method: usuarioId ? "PUT" : "POST"
                 }
             );
 
@@ -82,16 +117,26 @@ if (usuarioForm) {
 
             mensagem.textContent = dados.mensagem;
 
-            usuarioForm.reset();
-
-            carregarUsuarios();
+            cancelarEdicaoUsuario();
+            await carregarUsuarios();
 
         } catch (erro) {
             console.error("Erro ao cadastrar usuário:", erro);
+            document.getElementById("mensagem").textContent =
+                "Não foi possível salvar o usuário. Verifique a conexão com o dispositivo.";
         }
     });
 }
 
+function escaparHtml(valor) {
+    return String(valor).replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[caractere]);
+}
 
 async function carregarUsuarios() {
     try {
@@ -110,20 +155,50 @@ async function carregarUsuarios() {
         usuarios.forEach(usuario => {
 
             const linha = document.createElement("tr");
+            const nome = escaparHtml(usuario.nome);
+            const credencial = escaparHtml(usuario.credencialNfc || "Não cadastrada");
+            const tipoAcesso = escaparHtml(usuario.tipoAcesso);
+            const validade = usuario.tipoAcesso === "TEMPORARIO"
+                ? usuario.dataExpiracaoFormatada
+                    ? usuario.expirado
+                        ? `Expirado em ${escaparHtml(usuario.dataExpiracaoFormatada)}`
+                        : usuario.validadeVerificavel
+                            ? `Válido até ${escaparHtml(usuario.dataExpiracaoFormatada)}`
+                            : `Definido até ${escaparHtml(usuario.dataExpiracaoFormatada)}; horário não sincronizado`
+                    : "Validade não configurada"
+                : "Sem expiração";
+            const statusUsuario = !usuario.ativo
+                ? "Desativado"
+                : usuario.expirado
+                    ? "Expirado"
+                    : usuario.tipoAcesso === "TEMPORARIO" &&
+                        !usuario.validadeVerificavel
+                        ? "Validade não verificável"
+                    : "Ativo";
 
             linha.innerHTML = `
-                <td>${usuario.nome}</td>
+                <td>${nome}</td>
+
+                <td>${credencial}</td>
+
+                <td>${tipoAcesso}</td>
+
+                <td>${validade}</td>
 
                 <td>
-                    ${usuario.credencialNfc || "Não cadastrada"}
+                    <span class="${usuario.expirado ? "user-expired" : ""}">
+                        ${statusUsuario}
+                    </span>
                 </td>
 
-                <td>
-                    ${usuario.tipoAcesso}
-                </td>
-
-                <td>
+                <td class="user-actions-cell">
                     <div class="user-actions">
+                        <button
+                            type="button"
+                            onclick="editarUsuario(${usuario.id})"
+                        >
+                            Editar
+                        </button>
 
     ${
         usuario.ativo
@@ -162,6 +237,41 @@ async function carregarUsuarios() {
 
     } catch (erro) {
         console.error("Erro ao carregar usuários:", erro);
+    }
+}
+
+async function editarUsuario(id) {
+    try {
+        const resposta = await fetch("/api/usuarios");
+        if (!resposta.ok) {
+            throw new Error(`Falha ao carregar usuários: HTTP ${resposta.status}`);
+        }
+
+        const usuarios = await resposta.json();
+        const usuario = usuarios.find(item => item.id === id);
+        if (!usuario) {
+            throw new Error("Usuário não encontrado.");
+        }
+
+        document.getElementById("usuarioId").value = usuario.id;
+        document.getElementById("nome").value = usuario.nome;
+        document.getElementById("tipoAcesso").value =
+            usuario.tipoAcesso.toLowerCase();
+        document.getElementById("dataExpiracao").value =
+            usuario.dataExpiracao || "";
+        document.getElementById("tipoAcesso").dispatchEvent(
+            new Event("change")
+        );
+
+        document.querySelector('#usuarioForm button[type="submit"]').textContent =
+            "Salvar alterações";
+        document.getElementById("cancelarEdicao").hidden = false;
+        document.getElementById("usuarioForm").scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    } catch (erro) {
+        console.error("Erro ao iniciar edição do usuário:", erro);
     }
 }
 
@@ -426,8 +536,265 @@ if (document.getElementById("tempoResposta")) {
     setInterval(carregarPerformance, 1000);
 }
 
+const doorHistoryCanvas = document.getElementById("doorHistoryChart");
+
+if (doorHistoryCanvas) {
+    const doorHistoryMessage = document.getElementById("doorHistoryMessage");
+    const doorCurrentState = document.getElementById("doorCurrentState");
+    let doorHistoryData = null;
+
+    function desenharHistoricoPorta() {
+        if (!doorHistoryData || !doorHistoryData.horarioConfiavel) {
+            return;
+        }
+
+        const contexto = doorHistoryCanvas.getContext("2d");
+        const largura = doorHistoryCanvas.clientWidth;
+        const altura = doorHistoryCanvas.clientHeight;
+        if (!contexto || largura === 0 || altura === 0) {
+            return;
+        }
+
+        const escala = window.devicePixelRatio || 1;
+        doorHistoryCanvas.width = largura * escala;
+        doorHistoryCanvas.height = altura * escala;
+        contexto.scale(escala, escala);
+        contexto.clearRect(0, 0, largura, altura);
+
+        const margem = { esquerda: 58, direita: 14, superior: 12, inferior: 34 };
+        const graficoLargura = largura - margem.esquerda - margem.direita;
+        const graficoAltura = altura - margem.superior - margem.inferior;
+        const agora = doorHistoryData.agora;
+        const inicio = agora - 24 * 60 * 60;
+        const eventos = doorHistoryData.eventos
+            .filter(evento =>
+                Number.isFinite(evento.timestamp) &&
+                typeof evento.portaAberta === "boolean"
+            )
+            .sort((a, b) => a.timestamp - b.timestamp);
+        const anteriores = eventos.filter(evento => evento.timestamp <= inicio);
+        const recentes = eventos.filter(evento => evento.timestamp > inicio);
+        const estadoInicial = anteriores.length
+            ? anteriores[anteriores.length - 1]
+            : null;
+        const yEstado = aberta =>
+            margem.superior + (aberta ? 0 : graficoAltura);
+        const xTempo = timestamp =>
+            margem.esquerda +
+            ((timestamp - inicio) / (24 * 60 * 60)) * graficoLargura;
+
+        contexto.font = "12px sans-serif";
+        contexto.textBaseline = "middle";
+        contexto.fillStyle = "#71858a";
+        contexto.strokeStyle = "#dce9e7";
+        contexto.lineWidth = 1;
+
+        [true, false].forEach(aberta => {
+            const y = yEstado(aberta);
+            contexto.beginPath();
+            contexto.moveTo(margem.esquerda, y);
+            contexto.lineTo(largura - margem.direita, y);
+            contexto.stroke();
+            contexto.textAlign = "right";
+            contexto.fillText(aberta ? "Aberta" : "Fechada", margem.esquerda - 9, y);
+        });
+
+        contexto.textAlign = "center";
+        contexto.textBaseline = "top";
+        for (let hora = 0; hora <= 24; hora += 6) {
+            const x = margem.esquerda + (hora / 24) * graficoLargura;
+            const instante = new Date((inicio + hora * 60 * 60) * 1000);
+            const rotulo = instante.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "America/Sao_Paulo"
+            });
+            contexto.beginPath();
+            contexto.moveTo(x, margem.superior);
+            contexto.lineTo(x, altura - margem.inferior);
+            contexto.stroke();
+            contexto.fillText(rotulo, x, altura - margem.inferior + 8);
+        }
+
+        const pontos = [];
+        if (estadoInicial) {
+            pontos.push({ timestamp: inicio, portaAberta: estadoInicial.portaAberta });
+        }
+        pontos.push(...recentes);
+
+        if (pontos.length === 0) {
+            return;
+        }
+
+        contexto.strokeStyle = "#278a70";
+        contexto.lineWidth = 3;
+        contexto.lineJoin = "round";
+        contexto.beginPath();
+        let anterior = pontos[0];
+        contexto.moveTo(xTempo(anterior.timestamp), yEstado(anterior.portaAberta));
+
+        for (let i = 1; i < pontos.length; i++) {
+            const atual = pontos[i];
+            contexto.lineTo(xTempo(atual.timestamp), yEstado(anterior.portaAberta));
+            contexto.lineTo(xTempo(atual.timestamp), yEstado(atual.portaAberta));
+            anterior = atual;
+        }
+
+        contexto.lineTo(xTempo(agora), yEstado(anterior.portaAberta));
+        contexto.stroke();
+    }
+
+    async function carregarHistoricoPorta() {
+        try {
+            const resposta = await fetch("/api/historico-sensor", { cache: "no-store" });
+            const dados = await resposta.json();
+            if (!resposta.ok) {
+                throw new Error(dados.erro || "Não foi possível carregar o histórico.");
+            }
+
+            if (!dados.disponivel) {
+                throw new Error("O armazenamento do histórico não está disponível.");
+            }
+
+            doorHistoryData = dados;
+            if (!dados.horarioConfiavel) {
+                doorHistoryMessage.textContent =
+                    "Histórico indisponível: o relógio do ESP32 ainda não foi sincronizado. Nenhum horário foi estimado.";
+                doorCurrentState.textContent = "";
+                const contexto = doorHistoryCanvas.getContext("2d");
+                contexto.clearRect(0, 0, doorHistoryCanvas.width, doorHistoryCanvas.height);
+                return;
+            }
+
+            const eventos = dados.eventos.filter(evento =>
+                Number.isFinite(evento.timestamp) &&
+                typeof evento.portaAberta === "boolean"
+            );
+            const estadoAtual = eventos.length
+                ? eventos[eventos.length - 1].portaAberta
+                : null;
+            doorCurrentState.textContent = estadoAtual === null
+                ? "Ainda não há medições com horário confiável."
+                : `Último estado registrado: porta ${estadoAtual ? "aberta" : "fechada"}.`;
+
+            if (!eventos.length) {
+                doorHistoryMessage.textContent =
+                    "Ainda não há histórico suficiente. Aguardando a primeira leitura confiável do sensor.";
+            } else if (!dados.completo) {
+                doorHistoryMessage.textContent =
+                    "Histórico parcial: o limite local de armazenamento foi atingido e pode haver mudanças não exibidas.";
+            } else if (eventos.length < 2) {
+                doorHistoryMessage.textContent =
+                    "Histórico inicial: ainda não há mudanças de estado suficientes; a linha mostra a última leitura.";
+            } else {
+                doorHistoryMessage.textContent =
+                    "Histórico das últimas 24 horas, preservado no dispositivo após reinicializações.";
+            }
+
+            desenharHistoricoPorta();
+        } catch (erro) {
+            console.error("Erro ao carregar histórico do sensor:", erro);
+            doorHistoryMessage.textContent = erro.message;
+            doorCurrentState.textContent = "";
+        }
+    }
+
+    carregarHistoricoPorta();
+    setInterval(carregarHistoricoPorta, 30000);
+    window.addEventListener("resize", desenharHistoricoPorta);
+}
+
+const otaForm = document.getElementById("otaForm");
+
+if (otaForm) {
+    const otaFirmware = document.getElementById("otaFirmware");
+    const otaSubmit = document.getElementById("otaSubmit");
+    const otaProgress = document.getElementById("otaProgress");
+    const otaMessage = document.getElementById("otaMessage");
+
+    otaForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const arquivo = otaFirmware.files[0];
+        if (!arquivo) {
+            otaMessage.textContent = "Selecione um arquivo de firmware .bin.";
+            otaMessage.classList.add("is-error");
+            return;
+        }
+
+        if (!arquivo.name.toLowerCase().endsWith(".bin")) {
+            otaMessage.textContent = "O arquivo selecionado deve ter extensão .bin.";
+            otaMessage.classList.add("is-error");
+            return;
+        }
+
+        const corpo = new FormData();
+        corpo.append("firmware", arquivo);
+
+        const requisicao = new XMLHttpRequest();
+        requisicao.open("POST", "/api/ota");
+        requisicao.withCredentials = true;
+
+        otaSubmit.disabled = true;
+        otaProgress.hidden = false;
+        otaProgress.value = 0;
+        otaMessage.classList.remove("is-error");
+        otaMessage.textContent = "Enviando e gravando firmware...";
+
+        requisicao.upload.addEventListener("progress", evento => {
+            if (evento.lengthComputable) {
+                otaProgress.value = (evento.loaded / evento.total) * 100;
+                otaMessage.textContent =
+                    `Enviando firmware: ${otaProgress.value.toFixed(0)}%.`;
+            }
+        });
+
+        requisicao.addEventListener("load", () => {
+            let dados;
+            try {
+                dados = JSON.parse(requisicao.responseText);
+            } catch (erro) {
+                console.error("Resposta OTA inválida:", erro);
+                otaMessage.textContent =
+                    `Resposta inválida do ESP32 (HTTP ${requisicao.status}).`;
+                otaMessage.classList.add("is-error");
+                otaSubmit.disabled = false;
+                return;
+            }
+
+            if (requisicao.status < 200 || requisicao.status >= 300) {
+                otaMessage.textContent =
+                    dados.erro || `Falha na atualização (HTTP ${requisicao.status}).`;
+                otaMessage.classList.add("is-error");
+                otaSubmit.disabled = false;
+                return;
+            }
+
+            otaProgress.value = 100;
+            otaMessage.textContent =
+                `${dados.mensagem} Aguarde o dispositivo reiniciar e recarregue a página.`;
+        });
+
+        requisicao.addEventListener("error", () => {
+            otaMessage.textContent =
+                "Falha de comunicação durante a atualização. Verifique se o ESP32 ainda está acessível.";
+            otaMessage.classList.add("is-error");
+            otaSubmit.disabled = false;
+        });
+
+        requisicao.addEventListener("abort", () => {
+            otaMessage.textContent = "Envio da atualização cancelado.";
+            otaMessage.classList.add("is-error");
+            otaSubmit.disabled = false;
+        });
+
+        requisicao.send(corpo);
+    });
+}
+
 if (document.getElementById("listaUsuarios")) {
     carregarUsuarios();
+    setInterval(carregarUsuarios, 60000);
 }
 
 if (document.getElementById("totalUsuarios")) {

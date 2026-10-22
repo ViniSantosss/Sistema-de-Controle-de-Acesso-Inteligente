@@ -253,6 +253,23 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 
 .site-nav a span { display: flex; align-items: center; }
 
+.site-nav .about-nav-link {
+    width: 34px;
+    padding: 0;
+}
+
+.site-nav .about-nav-link span {
+    display: grid;
+    width: 19px;
+    height: 19px;
+    place-items: center;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .icon {
     display: block;
     width: 15px;
@@ -299,6 +316,8 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 
 .page-content > .page-section + .page-section { margin-top: 12px; }
 .page-section h3 { margin-bottom: 13px; font-size: 16px; font-weight: 620; text-align: left; }
+.about-list { display: grid; gap: 8px; margin: 0; padding-left: 20px; color: var(--ink); font-size: 13px; }
+.about-list a, .page-section > p a { color: var(--green-dark); overflow-wrap: anywhere; }
 .user-form-section > h3 { text-align: center; }
 
 .page-section form {
@@ -311,6 +330,9 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 
 .user-form-section form { max-width: none; }
 .user-form-section form button[type="submit"] { justify-self: end; }
+.validity-fields { display: grid; gap: 7px; }
+.validity-fields[hidden] { display: none; }
+.validity-fields small { color: var(--muted); font-size: 11px; }
 
 .settings-form {
     display: grid;
@@ -460,8 +482,22 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 .page-section button:hover { transform: translateY(-1px); background: linear-gradient(180deg, #328d73, var(--green-dark)); }
 .page-section button:focus-visible { outline: 3px solid rgba(39, 138, 112, 0.25); outline-offset: 2px; }
 .user-status { display: flex; align-items: center; gap: 12px; }
-.user-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
-.user-actions button { min-height: 32px; margin: 0; padding: 0 10px; }
+.user-actions-cell { min-width: 250px; }
+.user-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(92px, 1fr));
+    gap: 7px;
+    min-width: 230px;
+}
+.user-actions button {
+    width: 100%;
+    min-height: 34px;
+    margin: 0;
+    padding: 5px 8px;
+    white-space: normal;
+}
+.users-table { min-width: 920px; }
+.user-expired { color: #a93632; font-weight: 700; }
 .user-actions .button-delete {
     border: 1px solid #a93632;
     color: #fff;
@@ -560,7 +596,20 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 .metric-section p { margin-bottom: 0; color: var(--ink); font-size: 20px; font-weight: 650; }
 .metric-section p span { color: var(--green-dark); }
 
-.table-wrap { overflow-x: auto; }
+.ota-section { margin-top: 12px; }
+.ota-section form { max-width: none; }
+.ota-section input[type="file"] { min-height: 44px; padding: 9px 12px; }
+.ota-section progress { width: 100%; height: 12px; accent-color: var(--green); }
+.ota-section progress[hidden] { display: none; }
+.ota-message { margin-top: 10px; }
+.ota-message.is-error { color: #a33d35; }
+
+.sensor-history-section { margin-top: 12px; }
+.sensor-history-message, .sensor-current-state { margin-bottom: 8px; color: var(--muted); font-size: 13px; }
+.sensor-chart-wrap { width: 100%; min-height: 220px; }
+.sensor-chart-wrap canvas { display: block; width: 100%; height: 220px; }
+
+.table-wrap { overflow-x: auto; overscroll-behavior-inline: contain; }
 .page-section table { width: 100%; border-collapse: collapse; text-align: left; }
 .page-section th, .page-section td { padding: 12px 10px; border-bottom: 1px solid var(--line); font-size: 12px; }
 .page-section th { color: var(--muted); font-weight: 600; }

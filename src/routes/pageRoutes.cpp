@@ -64,6 +64,18 @@ void configurarRotasPaginas(WebServer& server) {
         file.close();
     });
 
+    server.on("/about.html", HTTP_GET, [&server]() {
+        File file = LittleFS.open("/about.html", "r");
+
+        if (!file) {
+            server.send(404, "text/plain", "about.html nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "text/html");
+        file.close();
+    });
+
     server.on("/css/style.css", HTTP_GET, [&server]() {
     File file = LittleFS.open("/css/style.css", "r");
 

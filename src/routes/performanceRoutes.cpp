@@ -1,4 +1,5 @@
 #include "routes/performanceRoutes.h"
+#include "sensors/doorHistory.h"
 
 #include <LittleFS.h>
 
@@ -10,6 +11,8 @@ static volatile uint32_t totalTicksCore0 = 0;
 static volatile uint32_t totalTicksCore1 = 0;
 static volatile uint32_t idleTicksCore0 = 0;
 static volatile uint32_t idleTicksCore1 = 0;
+static volatile bool idleRanSinceLastTickCore0 = false;
+static volatile bool idleRanSinceLastTickCore1 = false;
 
 static uint32_t ultimoTotalCore0 = 0;
 static uint32_t ultimoTotalCore1 = 0;
@@ -20,19 +23,27 @@ static bool monitorPerformanceAtivo = false;
 // Tick hooks may run while the flash cache is disabled.
 static void IRAM_ATTR tickHookCore0() {
     totalTicksCore0++;
+    if (idleRanSinceLastTickCore0) {
+        idleTicksCore0++;
+        idleRanSinceLastTickCore0 = false;
+    }
 }
 
 static void IRAM_ATTR tickHookCore1() {
     totalTicksCore1++;
+    if (idleRanSinceLastTickCore1) {
+        idleTicksCore1++;
+        idleRanSinceLastTickCore1 = false;
+    }
 }
 
 static bool idleHookCore0() {
-    idleTicksCore0++;
+    idleRanSinceLastTickCore0 = true;
     return true;
 }
 
 static bool idleHookCore1() {
-    idleTicksCore1++;
+    idleRanSinceLastTickCore1 = true;
     return true;
 }
 
@@ -72,6 +83,14 @@ void inicializarMonitorPerformance() {
 }
 
 void configurarRotasPerformance(WebServer& server) {
+    server.on("/api/historico-sensor", HTTP_GET, [&server]() {
+        server.send(
+            200,
+            "application/json",
+            obterHistoricoPortaJson()
+        );
+    });
+
     server.on("/api/performance", HTTP_GET, [&server]() {
         if (!monitorPerformanceAtivo) {
             server.send(

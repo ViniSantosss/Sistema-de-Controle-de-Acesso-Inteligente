@@ -15,14 +15,16 @@ enum class ResultadoAutenticacaoNFC {
     AUTORIZADO,
     CHAVE_DESCONHECIDA,
     USUARIO_DESATIVADO,
-    CHAVE_EXPIRADA
+    CHAVE_EXPIRADA,
+    VALIDADE_INDISPONIVEL
 };
 
 ResultadoVinculacaoNFC vincularChaveNFC(const String& uid, String& nomeUsuario);
 ResultadoAutenticacaoNFC autenticarChaveNFC(
     const String& uid,
     String& nomeUsuario,
-    String& tipoAcesso
+    String& tipoAcesso,
+    String& dataExpiracao
 );
 int getUsuarioAguardandoChave();
 void finalizarAguardandoChaveNFC();

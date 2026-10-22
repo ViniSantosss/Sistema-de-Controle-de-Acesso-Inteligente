@@ -10,10 +10,14 @@
 void tarefaCore1(void* parametro) {
 
     String uid;
+    bool aguardandoRemocaoCartao = false;
 
     while (true) {
-
-        if (lerUID(uid)) {
+        if (aguardandoRemocaoCartao) {
+            if (!lerUID(uid)) {
+                aguardandoRemocaoCartao = false;
+            }
+        } else if (lerUID(uid)) {
 
             Serial.print("UID detectado: ");
             Serial.println(uid);
@@ -41,8 +45,14 @@ void tarefaCore1(void* parametro) {
             } else {
                 String nomeUsuario;
                 String tipoAcesso;
+                String dataExpiracao;
                 ResultadoAutenticacaoNFC resultado =
-                    autenticarChaveNFC(uid, nomeUsuario, tipoAcesso);
+                    autenticarChaveNFC(
+                        uid,
+                        nomeUsuario,
+                        tipoAcesso,
+                        dataExpiracao
+                    );
 
                 switch (resultado) {
                     case ResultadoAutenticacaoNFC::AUTORIZADO:
@@ -55,14 +65,18 @@ void tarefaCore1(void* parametro) {
                         notificarAcessoNegadoUsuarioDesativado(nomeUsuario);
                         break;
                     case ResultadoAutenticacaoNFC::CHAVE_EXPIRADA:
-                        notificarAcessoNegadoChaveExpirada(nomeUsuario);
+                        notificarAcessoNegadoChaveExpirada(
+                            nomeUsuario,
+                            dataExpiracao
+                        );
+                        break;
+                    case ResultadoAutenticacaoNFC::VALIDADE_INDISPONIVEL:
+                        notificarAcessoNegadoValidadeIndisponivel(nomeUsuario);
                         break;
                 }
             }
 
-            while (lerUID(uid)) {
-                vTaskDelay(pdMS_TO_TICKS(100));
-            }
+            aguardandoRemocaoCartao = true;
         }
 
         vTaskDelay(pdMS_TO_TICKS(100));
@@ -71,7 +85,7 @@ void tarefaCore1(void* parametro) {
 
 void iniciarCore1Task() {
 
-    xTaskCreatePinnedToCore(
+    const BaseType_t resultado = xTaskCreatePinnedToCore(
         tarefaCore1,
         "Core1Task",
         4096,
@@ -80,4 +94,8 @@ void iniciarCore1Task() {
         nullptr,
         1
     );
+
+    if (resultado != pdPASS) {
+        Serial.println("Erro ao iniciar a tarefa de leitura NFC.");
+    }
 }

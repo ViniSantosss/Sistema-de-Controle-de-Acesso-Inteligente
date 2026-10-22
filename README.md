@@ -298,6 +298,35 @@ Exemplo de resposta:
 
 A API deverá evoluir conforme as funcionalidades do sistema forem implementadas.
 
+## Atualização de firmware via OTA
+
+Na página **Configurações**, a conta administrativa pode enviar um arquivo
+`.bin` gerado por `pio run` (`.pio/build/esp32dev/firmware.bin`) para
+`POST /api/ota`. A rota recebe o arquivo como `multipart/form-data`, valida a
+extensão e o byte de identificação do formato ESP32, grava na partição OTA
+inativa e só agenda a reinicialização após `Update.end(true)` concluir com
+sucesso. A autenticação reutiliza o login existente e sua sessão em memória;
+após reiniciar o dispositivo, é necessário entrar novamente.
+
+A tabela de partições padrão do ESP32 já inclui `otadata` e duas partições de
+aplicativo OTA, portanto `platformio.ini` não precisa de uma partição customizada.
+OTA atualiza o firmware, não a imagem LittleFS. Para atualizar os arquivos da
+interface, gere e grave separadamente o filesystem com `pio run -t buildfs`.
+
+## Histórico do sensor da porta
+
+A página **Performance** exibe as mudanças confirmadas do sensor MC-38 nas
+últimas 24 horas. Leituras estáveis são enfileiradas pela tarefa do sensor e
+gravadas pelo loop principal em `/historico_porta.json`, somente quando o
+estado muda ou quando há uma leitura inicial confiável. Os registros usam o
+relógio sincronizado por NTP; sem horário confiável, o endpoint não inventa
+timestamps e a interface explica por que o histórico está indisponível. O
+arquivo retém até 512 eventos para limitar o uso da LittleFS e assinala quando
+esse limite tornou o período exibido parcial.
+
+A página **Sobre** (`/about.html`) apresenta a universidade, integrantes,
+emails de contato e o link do repositório do projeto.
+
 ---
 
 # 7. Interface Web
@@ -393,6 +422,18 @@ O sistema deverá considerar:
 * período de acesso;
 * credencial NFC.
 
+Usuários `PERMANENTE` não têm expiração. Usuários `TEMPORARIO` armazenam a
+data e a hora de expiração em `usuarios.json`, e podem ter esses dados alterados
+pela tela de usuários. O ESP32 interpreta as datas no fuso `America/Sao_Paulo`
+(BRT, UTC-03:00).
+
+O horário é sincronizado por NTP quando há rede. A interface local e as rotas
+continuam disponíveis sem internet, mas o acesso temporário é negado até que o
+horário seja sincronizado após cada inicialização. Usuários antigos sem os
+novos campos continuam sendo carregados; se forem temporários, não recebem
+acesso até que uma validade seja configurada e o relógio esteja confiável.
+Usuários permanentes não dependem do NTP.
+
 ---
 
 # 10. Offline e sincronização
@@ -431,28 +472,35 @@ A disciplina aborda:
 * coordenação;
 * utilização dos recursos de hardware.
 
-O projeto prevê posteriormente a utilização dessas técnicas no ESP32.
-
-Uma possível arquitetura futura é separar responsabilidades como:
+O firmware utiliza tarefas FreeRTOS para separar a leitura do sensor magnético,
+a leitura NFC e o envio de notificações. O servidor HTTP permanece no loop
+principal do Arduino:
 
 ```text
 ESP32
 │
-├── Tarefa de rede/comunicação
-│   ├── Wi-Fi
-│   ├── API
-│   ├── sincronização
-│   └── Telegram
+├── Core 0
+│   └── Leitura periódica do sensor magnético da porta
 │
-└── Tarefa de controle de acesso
-    ├── NFC
-    ├── autorização local
-    └── controle da fechadura
+└── Core 1
+    ├── Loop principal e servidor Web
+    ├── Leitura NFC
+    └── Envio assíncrono das notificações do Telegram
 ```
 
-A divisão entre os núcleos do ESP32 e a utilização de FreeRTOS deverão ser implementadas quando houver uma necessidade concreta e quando forem pertinentes aos conteúdos da disciplina.
+O firmware inicia o servidor Web sem aguardar a conexão Wi-Fi. Enquanto a rede
+estiver indisponível, tenta reconectar periodicamente. As notificações do
+Telegram são enfileiradas para evitar que uma operação de rede síncrona bloqueie
+o processamento de NFC ou uma requisição HTTP. A rota de teste responde com
+`202 Accepted` quando a mensagem é aceita para envio.
 
-**Não adicionar FreeRTOS ou paralelismo artificialmente na primeira versão apenas para aumentar a complexidade.**
+As esperas `vTaskDelay` nas tarefas são pausas periódicas intencionais que cedem
+tempo ao escalonador; não são esperas ocupadas. A leitura NFC usa timeout
+limitado, e a tarefa acompanha a remoção do cartão entre iterações, sem um laço
+de espera exclusivo.
+
+O uso de tarefas e paralelismo deve permanecer motivado pelos requisitos do
+firmware, sem adicionar complexidade artificial.
 
 ---
 

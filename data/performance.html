@@ -25,12 +25,16 @@
                 <span>Usuários</span>
             </a>
 
+            <a href="/performance.html" aria-current="page">
+                <span>Performance</span>
+            </a>
+
             <a href="/config.html">
                 <span>Configurações</span>
             </a>
 
-            <a href="/performance.html" aria-current="page">
-                <span>Performance</span>
+            <a class="about-nav-link" href="/about.html" aria-label="Sobre" title="Sobre">
+                <span aria-hidden="true">?</span>
             </a>
         </nav>
     </header>
@@ -84,6 +88,24 @@
                 <p>Tempo de resposta: <span id="tempoResposta">--</span> ms</p>
             </section>
         </div>
+
+        <section class="page-section sensor-history-section" aria-labelledby="sensorHistoryHeading">
+            <h3 id="sensorHistoryHeading">Histórico do sensor da porta</h3>
+            <p>Estado da porta nas últimas 24 horas. As medições são registradas quando o relógio do ESP32 está sincronizado.</p>
+            <p id="doorHistoryMessage" class="sensor-history-message" role="status" aria-live="polite">
+                Carregando histórico do sensor...
+            </p>
+            <p id="doorCurrentState" class="sensor-current-state"></p>
+            <div class="sensor-chart-wrap">
+                <canvas
+                    id="doorHistoryChart"
+                    width="960"
+                    height="260"
+                    role="img"
+                    aria-label="Gráfico do estado da porta nas últimas 24 horas"
+                ></canvas>
+            </div>
+        </section>
     </main>
 
     <script src="/js/app.js"></script>

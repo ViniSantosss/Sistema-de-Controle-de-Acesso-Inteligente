@@ -4,5 +4,6 @@
 #include <WebServer.h>
 
 void configurarRotasAuth(WebServer& server);
+bool administradorAutenticado(WebServer& server);
 
 #endif

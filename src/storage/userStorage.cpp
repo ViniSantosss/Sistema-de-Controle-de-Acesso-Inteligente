@@ -41,6 +41,7 @@ bool salvarUsuarios() {
         usuario["tipoAcesso"] = usuarios[i].tipoAcesso;
         usuario["ativo"] = usuarios[i].ativo;
         usuario["credencialNFC"] = usuarios[i].credencialNFC;
+        usuario["dataExpiracao"] = usuarios[i].dataExpiracao;
     }
 
     size_t bytesEsperados = measureJson(documento);
@@ -82,10 +83,19 @@ void carregarUsuarios() {
         return;
     }
 
+    if (!documento.is<JsonArray>()) {
+        Serial.println("Formato invalido em usuarios.json.");
+        return;
+    }
+
     quantidadeUsuarios = 0;
     proximoId = 1;
 
     for (JsonObject usuario : documento.as<JsonArray>()) {
+        if (quantidadeUsuarios >= MAX_USUARIOS) {
+            Serial.println("Limite de usuarios excedido em usuarios.json.");
+            break;
+        }
 
         usuarios[quantidadeUsuarios].id =
             usuario["id"] | 0;
@@ -101,6 +111,9 @@ void carregarUsuarios() {
 
         usuarios[quantidadeUsuarios].credencialNFC =
             usuario["credencialNFC"] | "";
+
+        usuarios[quantidadeUsuarios].dataExpiracao =
+            usuario["dataExpiracao"] | "";
 
         if (usuarios[quantidadeUsuarios].id >= proximoId) {
             proximoId = usuarios[quantidadeUsuarios].id + 1;

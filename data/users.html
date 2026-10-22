@@ -25,12 +25,16 @@
                 <span>Usuários</span>
             </a>
 
+            <a href="/performance.html">
+                <span>Performance</span>
+            </a>
+
             <a href="/config.html">
                 <span>Configurações</span>
             </a>
 
-            <a href="/performance.html">
-                <span>Performance</span>
+            <a class="about-nav-link" href="/about.html" aria-label="Sobre" title="Sobre">
+                <span aria-hidden="true">?</span>
             </a>
         </nav>
     </header>
@@ -56,6 +60,8 @@
                 <label for="nome">Nome</label>
                 <input type="text" id="nome" required>
 
+                <input type="hidden" id="usuarioId">
+
                 <label for="tipoAcesso">Tipo de acesso</label>
 
                 <select id="tipoAcesso">
@@ -63,8 +69,17 @@
                     <option value="temporario">Temporário</option>
                 </select>
 
+                <div class="validity-fields" id="validadeCampos" hidden>
+                    <label for="dataExpiracao">Data e hora de expiração</label>
+                    <input type="datetime-local" id="dataExpiracao">
+                    <small>Horário de São Paulo (UTC-03:00).</small>
+                </div>
+
                 <button type="submit">
                     Cadastrar usuário
+                </button>
+                <button type="button" id="cancelarEdicao" hidden>
+                    Cancelar edição
                 </button>
 
             </form>
@@ -84,14 +99,16 @@
 
             <div class="table-wrap">
 
-                <table>
+                <table class="users-table">
 
                     <thead>
                         <tr>
                             <th>Nome</th>
                             <th>Credencial</th>
                             <th>Acesso</th>
+                            <th>Validade</th>
                             <th>Status</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
 
