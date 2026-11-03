@@ -47,9 +47,9 @@ Essas funcionalidades fazem parte do escopo proposto para o projeto da disciplin
 * Relé
 * Fechadura elétrica de 12 V
 
-> **Importante:** os componentes acima, com exceção do ESP32, ainda não estão disponíveis neste estágio do desenvolvimento. O código não deve assumir que esses componentes já estão conectados ou disponíveis para testes.
+> **Importante:** o PN532 está conectado ao ESP32 e o firmware está configurado para comunicação SPI. Configure o módulo com a chave 1 desligada e a chave 2 ligada.
 
-> **NFC temporariamente desativado:** enquanto o PN532 não estiver conectado, a inicialização e as leituras NFC permanecem desativadas em `src/nfc/nfcManager.cpp` (`NFC_HABILITADO 0`). Para reativar o leitor quando ele estiver conectado, altere o valor para `1`.
+> **Pinos NFC SPI:** SCK → GPIO 18, MISO → GPIO 19, MOSI → GPIO 23 e SS → GPIO 5. Mantenha VCC e GND conectados; IRQ e RSTO não são usados.
 
 ---
 

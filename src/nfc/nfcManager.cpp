@@ -1,38 +1,46 @@
 #include "nfc/nfcManager.h"
 
-#define NFC_HABILITADO 0
+#define NFC_HABILITADO 1
 
 #if NFC_HABILITADO
-#include <Wire.h>
+#include <SPI.h>
 #include <Adafruit_PN532.h>
 
-#define SDA_PIN 21
-#define SCL_PIN 22
+#define PN532_SCK 18
+#define PN532_MISO 19
+#define PN532_MOSI 23
+#define PN532_SS 5
 
-#define PN532_IRQ 2
-#define PN532_RESET 3
-
-Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET, &Wire);
+Adafruit_PN532 nfc(PN532_SS, &SPI);
+bool leitorNFCPronto = false;
 #endif
 
 void inicializarNFC() {
 
 #if NFC_HABILITADO
-    Wire.begin(SDA_PIN, SCL_PIN);
+    leitorNFCPronto = false;
+    SPI.begin(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 
-    nfc.begin();
+    if (!nfc.begin()) {
+        Serial.println("Erro ao iniciar o PN532 no barramento SPI.");
+        return;
+    }
 
     uint32_t versiondata = nfc.getFirmwareVersion();
 
     if (!versiondata) {
-        Serial.println("PN532 nao encontrado.");
+        Serial.println("PN532 nao respondeu no barramento SPI.");
         return;
     }
 
     Serial.println("PN532 encontrado.");
 
-    nfc.SAMConfig();
+    if (!nfc.SAMConfig()) {
+        Serial.println("Falha ao configurar o leitor PN532.");
+        return;
+    }
 
+    leitorNFCPronto = true;
     Serial.println("Leitor NFC pronto.");
 #else
     Serial.println("Leitor NFC desativado temporariamente.");
@@ -42,6 +50,10 @@ void inicializarNFC() {
 bool lerUID(String& uid) {
 
 #if NFC_HABILITADO
+    if (!leitorNFCPronto) {
+        return false;
+    }
+
     uint8_t success;
 
     uint8_t uidBytes[7];
