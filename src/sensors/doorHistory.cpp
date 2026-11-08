@@ -7,6 +7,7 @@
 #include <freertos/queue.h>
 
 #include "time/systemClock.h"
+#include "system/systemTelemetry.h"
 
 namespace {
 
@@ -163,6 +164,8 @@ bool enfileirarEstadoPorta(bool portaAberta, int64_t timestamp) {
 }
 
 void processarHistoricoPortaPendente() {
+    ScopedFunctionTimer timer(FunctionMetric::DOOR_HISTORY);
+
     if (!historicoDisponivel || filaEventos == nullptr) {
         return;
     }

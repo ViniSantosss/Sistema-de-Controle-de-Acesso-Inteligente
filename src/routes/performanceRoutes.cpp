@@ -4,8 +4,12 @@
 #include <LittleFS.h>
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <esp_freertos_hooks.h>
 #include <esp_timer.h>
+#include <freertos/task.h>
+
+#include "system/systemTelemetry.h"
 
 static volatile uint32_t totalTicksCore0 = 0;
 static volatile uint32_t totalTicksCore1 = 0;
@@ -89,6 +93,43 @@ void configurarRotasPerformance(WebServer& server) {
             "application/json",
             obterHistoricoPortaJson()
         );
+    });
+
+    server.on("/api/performance/telemetria", HTTP_GET, [&server]() {
+        JsonDocument documento;
+        documento["tasksSistema"] = uxTaskGetNumberOfTasks();
+        documento["tasksCore0"] = 1;
+        documento["tasksCore1"] = 1;
+        JsonArray tarefas = documento["tarefasAplicacao"].to<JsonArray>();
+        JsonObject tarefaPorta = tarefas.add<JsonObject>();
+        tarefaPorta["nome"] = "Leitura do sensor da porta";
+        tarefaPorta["core"] = 0;
+        JsonObject tarefaNfc = tarefas.add<JsonObject>();
+        tarefaNfc["nome"] = "Leitura NFC";
+        tarefaNfc["core"] = 1;
+
+        JsonArray funcoes = documento["funcoes"].to<JsonArray>();
+        for (uint8_t indice = 0;
+             indice < static_cast<uint8_t>(FunctionMetric::COUNT);
+             indice++) {
+            const FunctionMetric metric = static_cast<FunctionMetric>(indice);
+            const FunctionMetricSnapshot snapshot =
+                obterMetricaFuncao(metric);
+            JsonObject funcao = funcoes.add<JsonObject>();
+            funcao["nome"] = nomeMetricaFuncao(metric);
+            funcao["chamadas"] = snapshot.calls;
+            funcao["minimoUs"] = snapshot.calls > 0
+                ? snapshot.minimumMicroseconds
+                : 0;
+            funcao["medioUs"] = snapshot.calls > 0
+                ? snapshot.totalMicroseconds / snapshot.calls
+                : 0;
+            funcao["maximoUs"] = snapshot.maximumMicroseconds;
+        }
+
+        String json;
+        serializeJson(documento, json);
+        server.send(200, "application/json", json);
     });
 
     server.on("/api/performance", HTTP_GET, [&server]() {
