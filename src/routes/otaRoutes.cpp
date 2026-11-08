@@ -4,6 +4,7 @@
 #include <Update.h>
 
 #include "routes/authRoutes.h"
+#include "system/systemLogger.h"
 
 static bool uploadAutorizado = false;
 static bool uploadIniciado = false;
@@ -23,13 +24,14 @@ static bool nomeFirmwareValido(const String& nome) {
 
 static void marcarFalhaOta(const char* contexto) {
     uploadFalhou = true;
-    Serial.printf("OTA: erro em %s", contexto);
+    String mensagem = String("OTA: erro em ") + contexto;
 
     if (Update.hasError()) {
-        Serial.printf(": %s", Update.errorString());
+        mensagem += ": ";
+        mensagem += Update.errorString();
     }
 
-    Serial.println();
+    registrarLog(LogLevel::ERROR, mensagem);
     if (Update.isRunning()) {
         Update.abort();
     }
@@ -49,14 +51,22 @@ static void receberFirmwareOta(WebServer& webServer) {
 
         if (!uploadAutorizado) {
             uploadFalhou = true;
-            Serial.println("OTA: upload recusado; sessao administrativa ausente.");
+            registrarLog(
+                LogLevel::WARNING,
+                "OTA: upload recusado; sessao administrativa ausente."
+            );
             return;
         }
 
-        Serial.printf("OTA: inicio do recebimento de '%s'.\n", upload.filename.c_str());
+        registrarLog(
+            LogLevel::INFO,
+            String("OTA: inicio do recebimento de '") +
+                upload.filename + "'."
+        );
         if (!nomeFirmwareValido(upload.filename)) {
             uploadFalhou = true;
             Serial.println("OTA: arquivo recusado; esperado um arquivo .bin.");
+            registrarLog(LogLevel::WARNING, "OTA: arquivo recusado; esperado um arquivo .bin.");
             return;
         }
 
@@ -131,9 +141,10 @@ static void receberFirmwareOta(WebServer& webServer) {
 
         uploadConcluido = true;
         uploadIniciado = false;
-        Serial.printf(
-            "OTA: firmware recebido e gravado (%u bytes).\n",
-            static_cast<unsigned>(bytesRecebidos)
+        registrarLog(
+            LogLevel::INFO,
+            String("OTA: firmware recebido e gravado (") +
+                String(static_cast<unsigned>(bytesRecebidos)) + " bytes)."
         );
         return;
     }
@@ -144,7 +155,7 @@ static void receberFirmwareOta(WebServer& webServer) {
         }
         uploadIniciado = false;
         uploadFalhou = true;
-        Serial.println("OTA: recebimento interrompido pelo cliente.");
+        registrarLog(LogLevel::WARNING, "OTA: recebimento interrompido pelo cliente.");
     }
 }
 
@@ -211,6 +222,6 @@ void processarReinicioOtaPendente() {
     }
 
     reinicioOtaPendente = false;
-    Serial.println("OTA: atualizacao concluida; reiniciando ESP32.");
+    registrarLog(LogLevel::INFO, "OTA: atualizacao concluida; reiniciando ESP32.");
     ESP.restart();
 }

@@ -1,4 +1,6 @@
 #include "routes/userRoutes.h"
+#include "system/systemLogger.h"
+#include "system/systemTelemetry.h"
 #include "telegram/telegramBot.h"
 #include "storage/userStorage.h"
 #include "models/user.h"
@@ -55,6 +57,7 @@ ResultadoVinculacaoNFC vincularChaveNFC(
     const String& uid,
     String& nomeUsuario
 ) {
+    ScopedFunctionTimer timer(FunctionMetric::NFC_LINKING);
 
     int idUsuario = getUsuarioAguardandoChave();
 
@@ -109,6 +112,7 @@ ResultadoAutenticacaoNFC autenticarChaveNFC(
     String& tipoAcesso,
     String& dataExpiracao
 ) {
+    ScopedFunctionTimer timer(FunctionMetric::NFC_AUTHENTICATION);
 
     for (int i = 0; i < quantidadeUsuarios; i++) {
 
@@ -121,6 +125,7 @@ ResultadoAutenticacaoNFC autenticarChaveNFC(
             if (!usuarios[i].ativo) {
                 Serial.print("Acesso negado: usuario desativado - ");
                 Serial.println(usuarios[i].nome);
+                registrarLog(LogLevel::WARNING, "Acesso NFC negado: usuario desativado.");
 
                 return ResultadoAutenticacaoNFC::USUARIO_DESATIVADO;
             }
@@ -135,18 +140,24 @@ ResultadoAutenticacaoNFC autenticarChaveNFC(
                     Serial.println(
                         "Acesso negado: validade temporal nao verificavel."
                     );
+                    registrarLog(
+                        LogLevel::WARNING,
+                        "Acesso NFC negado: validade temporal nao verificavel."
+                    );
                     return ResultadoAutenticacaoNFC::VALIDADE_INDISPONIVEL;
                 }
 
                 if (time(nullptr) > instanteExpiracao) {
                     Serial.print("Acesso negado: validade expirada - ");
                     Serial.println(nomeUsuario);
+                    registrarLog(LogLevel::WARNING, "Acesso NFC negado: credencial expirada.");
                     return ResultadoAutenticacaoNFC::CHAVE_EXPIRADA;
                 }
             }
 
             Serial.print("Acesso autorizado: ");
             Serial.println(usuarios[i].nome);
+            registrarLog(LogLevel::INFO, "Acesso NFC autorizado.");
 
             return ResultadoAutenticacaoNFC::AUTORIZADO;
         }
@@ -154,6 +165,7 @@ ResultadoAutenticacaoNFC autenticarChaveNFC(
 
     Serial.print("Acesso negado: chave nao cadastrada - ");
     Serial.println(uid);
+    registrarLog(LogLevel::WARNING, "Acesso NFC negado: credencial desconhecida.");
 
     return ResultadoAutenticacaoNFC::CHAVE_DESCONHECIDA;
 }
