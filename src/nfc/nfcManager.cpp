@@ -1,4 +1,6 @@
 #include "nfc/nfcManager.h"
+#include "system/systemLogger.h"
+#include "system/systemTelemetry.h"
 
 #define NFC_HABILITADO 1
 
@@ -23,6 +25,7 @@ void inicializarNFC() {
 
     if (!nfc.begin()) {
         Serial.println("Erro ao iniciar o PN532 no barramento SPI.");
+        registrarLog(LogLevel::ERROR, "Falha ao iniciar o PN532 no barramento SPI.");
         return;
     }
 
@@ -30,6 +33,7 @@ void inicializarNFC() {
 
     if (!versiondata) {
         Serial.println("PN532 nao respondeu no barramento SPI.");
+        registrarLog(LogLevel::ERROR, "PN532 nao respondeu no barramento SPI.");
         return;
     }
 
@@ -37,17 +41,20 @@ void inicializarNFC() {
 
     if (!nfc.SAMConfig()) {
         Serial.println("Falha ao configurar o leitor PN532.");
+        registrarLog(LogLevel::ERROR, "Falha ao configurar o leitor PN532.");
         return;
     }
 
     leitorNFCPronto = true;
     Serial.println("Leitor NFC pronto.");
+    registrarLog(LogLevel::INFO, "Leitor NFC pronto.");
 #else
     Serial.println("Leitor NFC desativado temporariamente.");
 #endif
 }
 
 bool lerUID(String& uid) {
+    ScopedFunctionTimer timer(FunctionMetric::SENSOR_READ);
 
 #if NFC_HABILITADO
     if (!leitorNFCPronto) {
