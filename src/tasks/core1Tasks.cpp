@@ -3,6 +3,7 @@
 #include "nfc/nfcManager.h"
 #include "routes/userRoutes.h"
 #include "telegram/telegramBot.h"
+#include "system/systemLogger.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -97,5 +98,6 @@ void iniciarCore1Task() {
 
     if (resultado != pdPASS) {
         Serial.println("Erro ao iniciar a tarefa de leitura NFC.");
+        registrarLog(LogLevel::ERROR, "Falha ao iniciar a task de leitura NFC.");
     }
 }

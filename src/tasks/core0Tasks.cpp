@@ -3,6 +3,7 @@
 #include "hardware/hardwarePins.h"
 #include "sensors/doorHistory.h"
 #include "time/systemClock.h"
+#include "system/systemLogger.h"
 
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>
@@ -60,6 +61,10 @@ static void tarefaCore0(void* parametro) {
                     Serial.println(
                         "Historico da porta: fila cheia; leitura aguardando."
                     );
+                    registrarLog(
+                        LogLevel::WARNING,
+                        "Historico da porta: fila de eventos cheia."
+                    );
                     avisoFilaCheia = true;
                 }
             }
@@ -84,5 +89,6 @@ void iniciarCore0Task() {
 
     if (resultado != pdPASS) {
         Serial.println("Erro ao iniciar a tarefa do sensor da porta.");
+        registrarLog(LogLevel::ERROR, "Falha ao iniciar a task do sensor da porta.");
     }
 }
