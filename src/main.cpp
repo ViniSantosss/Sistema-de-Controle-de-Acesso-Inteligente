@@ -17,6 +17,8 @@
 
 #include "tasks/core0Tasks.h"
 #include "tasks/core1Tasks.h"
+#include "tasks/core0Tasks.h"
+#include "tasks/core1Tasks.h"
 #include "secrets.h"
 #include "time/systemClock.h"
 #include "system/systemLogger.h"
@@ -100,10 +102,13 @@ void setup() {
     configurarRotasLogs(server);
     iniciarTelegram();
 
+    iniciarTasksCore0();
+    iniciarTasksCore1();
+
     server.begin();
 
-    iniciarCore0Task();
-    iniciarCore1Task();
+    iniciarTasksCore0();
+    iniciarTasksCore1();
 
     Serial.println("Servidor Web iniciado!");
     registrarLog(LogLevel::INFO, "Servidor web iniciado.");

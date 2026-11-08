@@ -84,7 +84,7 @@ void tarefaCore1(void* parametro) {
     }
 }
 
-void iniciarCore1Task() {
+void iniciarTasksCore1() {
 
     const BaseType_t resultado = xTaskCreatePinnedToCore(
         tarefaCore1,
