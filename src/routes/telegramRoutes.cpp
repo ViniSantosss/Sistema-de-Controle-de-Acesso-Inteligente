@@ -8,23 +8,23 @@ void configurarRotasTelegram(WebServer& server) {
 
     server.on("/api/telegram/teste", HTTP_GET, [&server]() {
 
-        bool enviado = enviarMensagemTelegram(
+        bool enfileirado = enviarMensagemTelegram(
             "Teste do Sistema de Controle de Acesso."
         );
 
-        if (!enviado) {
+        if (!enfileirado) {
             server.send(
-                500,
+                503,
                 "application/json",
-                "{\"erro\":\"Nao foi possivel enviar a mensagem\"}"
+                "{\"erro\":\"Nao foi possivel enfileirar a mensagem\"}"
             );
             return;
         }
 
         server.send(
-            200,
+            202,
             "application/json",
-            "{\"mensagem\":\"Mensagem enviada com sucesso\"}"
+            "{\"mensagem\":\"Mensagem adicionada a fila de envio\"}"
         );
     });
 }

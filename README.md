@@ -4,7 +4,9 @@ Sistema de controle de acesso baseado em **ESP32**, desenvolvido para a discipli
 
 O projeto tem como objetivo desenvolver um sistema capaz de controlar e registrar acessos utilizando comunicação sem fio, autenticação por credencial NFC e, posteriormente, acionamento de uma fechadura elétrica.
 
-> **Status atual:** início do desenvolvimento. A estrutura do projeto já foi criada e a implementação do firmware ainda está começando.
+> **Status atual:** o firmware já oferece interface administrativa local, gestão
+> de usuários, leitura NFC, histórico da porta, OTA e monitoramento básico de
+> desempenho.
 
 ---
 
@@ -47,7 +49,9 @@ Essas funcionalidades fazem parte do escopo proposto para o projeto da disciplin
 * Relé
 * Fechadura elétrica de 12 V
 
-> **Importante:** os componentes acima, com exceção do ESP32, ainda não estão disponíveis neste estágio do desenvolvimento. O código não deve assumir que esses componentes já estão conectados ou disponíveis para testes.
+> **Importante:** o PN532 está conectado ao ESP32 e o firmware está configurado para comunicação SPI. Configure o módulo com a chave 1 desligada e a chave 2 ligada.
+
+> **Pinos NFC SPI:** SCK → GPIO 18, MISO → GPIO 19, MOSI → GPIO 23 e SS → GPIO 5. Mantenha VCC e GND conectados; IRQ e RSTO não são usados.
 
 ---
 
@@ -190,6 +194,17 @@ O objetivo inicial é fazer o ESP32:
 
 # 5. Estratégia de desenvolvimento
 
+## Enviar e acessar a interface web
+
+Depois de gravar o firmware, envie também os arquivos da pasta `data/` para o LittleFS:
+
+```bash
+py -m platformio run --target upload
+py -m platformio run --target uploadfs
+```
+
+O computador ou celular usado para acessar a interface deve estar conectado à mesma rede local do ESP32. Abra no navegador `http://<IP exibido no monitor serial>/` (por exemplo, `http://192.168.1.100/`), usando `http://` e não `https://`.
+
 O desenvolvimento deve seguir uma evolução incremental.
 
 ## Etapa 1 — Firmware básico
@@ -285,11 +300,56 @@ Exemplo de resposta:
 
 A API deverá evoluir conforme as funcionalidades do sistema forem implementadas.
 
+## Atualização de firmware via OTA
+
+Na página **Configurações**, a conta administrativa pode enviar um arquivo
+`.bin` gerado por `pio run` (`.pio/build/esp32dev/firmware.bin`) para
+`POST /api/ota`. A rota recebe o arquivo como `multipart/form-data`, valida a
+extensão e o byte de identificação do formato ESP32, grava na partição OTA
+inativa e só agenda a reinicialização após `Update.end(true)` concluir com
+sucesso. A autenticação reutiliza o login existente e sua sessão em memória;
+após reiniciar o dispositivo, é necessário entrar novamente.
+
+A tabela de partições padrão do ESP32 já inclui `otadata` e duas partições de
+aplicativo OTA, portanto `platformio.ini` não precisa de uma partição customizada.
+OTA atualiza o firmware, não a imagem LittleFS. Para atualizar os arquivos da
+interface, gere e grave separadamente o filesystem com `pio run -t buildfs`.
+
+## Histórico do sensor da porta
+
+A página **Performance** exibe as mudanças confirmadas do sensor MC-38 nas
+últimas 24 horas. Leituras estáveis são enfileiradas pela tarefa do sensor e
+gravadas pelo loop principal em `/historico_porta.json`, somente quando o
+estado muda ou quando há uma leitura inicial confiável. Os registros usam o
+relógio sincronizado por NTP; sem horário confiável, o endpoint não inventa
+timestamps e a interface explica por que o histórico está indisponível. O
+arquivo retém até 512 eventos para limitar o uso da LittleFS e assinala quando
+esse limite tornou o período exibido parcial.
+
+A página **Sobre** (`/about.html`) apresenta a universidade, integrantes,
+emails de contato e o link do repositório do projeto.
+
+## Logs e telemetria
+
+O painel autenticado (`/panel.html`) mostra os logs recentes em formato de
+console e permite exportá-los como `logs.txt`. O ESP32 mantém os últimos 1000
+registros em `/logs.txt`, com níveis `INFO`, `WARNING` e `ERROR`. Quando o
+horário ainda não foi sincronizado por NTP, o registro informa o uptime em vez
+de apresentar uma data incorreta. A consulta e a exportação dos logs exigem
+sessão administrativa.
+
+A página **Performance** apresenta a contagem total de tasks do FreeRTOS e as
+tasks da aplicação fixadas em cada core. Também acompanha chamadas, duração
+mínima, média e máxima de cinco operações: leitura NFC, autenticação NFC,
+vinculação NFC, processamento do histórico da porta e atualização da conexão
+Wi-Fi. Essas métricas de duração são acumuladas em RAM e reiniciam junto com o
+dispositivo.
+
 ---
 
 # 7. Interface Web
 
-A interface web será inicialmente armazenada no LittleFS do ESP32.
+A interface web é armazenada no LittleFS do ESP32.
 
 Fluxo:
 
@@ -308,7 +368,8 @@ Navegador
     └── app.js
 ```
 
-A interface deverá posteriormente evoluir para uma interface administrativa do sistema.
+A interface administrativa inclui painel, usuários, configurações,
+performance e informações do projeto.
 
 ---
 
@@ -380,6 +441,18 @@ O sistema deverá considerar:
 * período de acesso;
 * credencial NFC.
 
+Usuários `PERMANENTE` não têm expiração. Usuários `TEMPORARIO` armazenam a
+data e a hora de expiração em `usuarios.json`, e podem ter esses dados alterados
+pela tela de usuários. O ESP32 interpreta as datas no fuso `America/Sao_Paulo`
+(BRT, UTC-03:00).
+
+O horário é sincronizado por NTP quando há rede. A interface local e as rotas
+continuam disponíveis sem internet, mas o acesso temporário é negado até que o
+horário seja sincronizado após cada inicialização. Usuários antigos sem os
+novos campos continuam sendo carregados; se forem temporários, não recebem
+acesso até que uma validade seja configurada e o relógio esteja confiável.
+Usuários permanentes não dependem do NTP.
+
 ---
 
 # 10. Offline e sincronização
@@ -418,28 +491,35 @@ A disciplina aborda:
 * coordenação;
 * utilização dos recursos de hardware.
 
-O projeto prevê posteriormente a utilização dessas técnicas no ESP32.
-
-Uma possível arquitetura futura é separar responsabilidades como:
+O firmware utiliza tarefas FreeRTOS para separar a leitura do sensor magnético,
+a leitura NFC e o envio de notificações. O servidor HTTP permanece no loop
+principal do Arduino:
 
 ```text
 ESP32
 │
-├── Tarefa de rede/comunicação
-│   ├── Wi-Fi
-│   ├── API
-│   ├── sincronização
-│   └── Telegram
+├── Core 0
+│   └── Leitura periódica do sensor magnético da porta
 │
-└── Tarefa de controle de acesso
-    ├── NFC
-    ├── autorização local
-    └── controle da fechadura
+└── Core 1
+    ├── Loop principal e servidor Web
+    ├── Leitura NFC
+    └── Envio assíncrono das notificações do Telegram
 ```
 
-A divisão entre os núcleos do ESP32 e a utilização de FreeRTOS deverão ser implementadas quando houver uma necessidade concreta e quando forem pertinentes aos conteúdos da disciplina.
+O firmware inicia o servidor Web sem aguardar a conexão Wi-Fi. Enquanto a rede
+estiver indisponível, tenta reconectar periodicamente. As notificações do
+Telegram são enfileiradas para evitar que uma operação de rede síncrona bloqueie
+o processamento de NFC ou uma requisição HTTP. A rota de teste responde com
+`202 Accepted` quando a mensagem é aceita para envio.
 
-**Não adicionar FreeRTOS ou paralelismo artificialmente na primeira versão apenas para aumentar a complexidade.**
+As esperas `vTaskDelay` nas tarefas são pausas periódicas intencionais que cedem
+tempo ao escalonador; não são esperas ocupadas. A leitura NFC usa timeout
+limitado, e a tarefa acompanha a remoção do cartão entre iterações, sem um laço
+de espera exclusivo.
+
+O uso de tarefas e paralelismo deve permanecer motivado pelos requisitos do
+firmware, sem adicionar complexidade artificial.
 
 ---
 
@@ -489,14 +569,10 @@ Essa ordem pode ser alterada conforme as necessidades do projeto.
 
 # 13. Métricas e desempenho
 
-O projeto deverá posteriormente considerar métricas relacionadas ao desempenho do sistema, incluindo:
-
-* utilização de CPU;
-* utilização de RAM;
-* tempo de resposta;
-* utilização de memória Flash.
-
-Essas métricas serão utilizadas principalmente nas etapas relacionadas ao desempenho e à utilização de processamento paralelo/concurrente.
+A página **Performance** apresenta utilização de CPU por core, uso de heap e
+Flash, tempo de resposta, histórico do sensor da porta, contagem de tasks e
+tempos de execução de cinco operações principais. Os valores de duração são
+estatísticas coletadas desde a inicialização atual do ESP32.
 
 ---
 
@@ -550,19 +626,14 @@ O projeto deve evitar complexidade prematura.
 
 * [x] Estrutura inicial do projeto
 * [x] Diretórios `src`, `include` e `data`
-* [x] Estrutura inicial da interface web
-* [x] Configuração inicial do projeto PlatformIO
+* [x] Interface web administrativa e armazenamento LittleFS
+* [x] Monitoramento básico de performance e histórico da porta
+* [x] Logs persistentes e telemetria das tasks/operações
 
 ### Em desenvolvimento
 
-* [ ] Primeiro firmware
-* [ ] Teste do ESP32
-* [ ] Comunicação serial
-* [ ] Conexão Wi-Fi
-* [ ] Web Server
-* [ ] LittleFS
-* [ ] Interface web
-* [ ] API
+* [ ] Testes integrados no ESP32 físico
+* [ ] Configuração de Wi-Fi por modo de provisionamento
 
 ### Futuro
 
@@ -575,14 +646,11 @@ O projeto deve evitar complexidade prematura.
 * [ ] Fechadura elétrica
 * [ ] Controle de usuários
 * [ ] Controle de acessos temporários
-* [ ] Logs
 * [ ] Telegram
 * [ ] Modo offline
 * [ ] Sincronização
-* [ ] FreeRTOS
 * [ ] Comunicação entre tarefas
 * [ ] Paralelismo
-* [ ] Métricas de desempenho
 
 ---
 

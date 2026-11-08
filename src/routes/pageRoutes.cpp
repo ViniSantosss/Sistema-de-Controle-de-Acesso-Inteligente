@@ -28,11 +28,11 @@ void configurarRotasPaginas(WebServer& server) {
         file.close();
     });
 
-    server.on("/usuarios.html", HTTP_GET, [&server]() {
-        File file = LittleFS.open("/usuarios.html", "r");
+    server.on("/users.html", HTTP_GET, [&server]() {
+        File file = LittleFS.open("/users.html", "r");
 
         if (!file) {
-            server.send(404, "text/plain", "usuarios.html nao encontrado");
+            server.send(404, "text/plain", "users.html nao encontrado");
             return;
         }
 
@@ -40,11 +40,11 @@ void configurarRotasPaginas(WebServer& server) {
         file.close();
     });
 
-    server.on("/configuracoes.html", HTTP_GET, [&server]() {
-        File file = LittleFS.open("/configuracoes.html", "r");
+    server.on("/config.html", HTTP_GET, [&server]() {
+        File file = LittleFS.open("/config.html", "r");
 
         if (!file) {
-            server.send(404, "text/plain", "configuracoes.html nao encontrado");
+            server.send(404, "text/plain", "config.html nao encontrado");
             return;
         }
 
@@ -57,6 +57,18 @@ void configurarRotasPaginas(WebServer& server) {
 
         if (!file) {
             server.send(404, "text/plain", "performance.html nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "text/html");
+        file.close();
+    });
+
+    server.on("/about.html", HTTP_GET, [&server]() {
+        File file = LittleFS.open("/about.html", "r");
+
+        if (!file) {
+            server.send(404, "text/plain", "about.html nao encontrado");
             return;
         }
 
@@ -85,6 +97,18 @@ void configurarRotasPaginas(WebServer& server) {
         }
 
         server.streamFile(file, "application/javascript");
+        file.close();
+    });
+
+    server.on("/icons.svg", HTTP_GET, [&server]() {
+        File file = LittleFS.open("/icons.svg", "image/svg+xml");
+
+        if (!file) {
+            server.send(404, "text/plain", "icons.svg nao encontrado");
+            return;
+        }
+
+        server.streamFile(file, "image/svg+xml");
         file.close();
     });
 }

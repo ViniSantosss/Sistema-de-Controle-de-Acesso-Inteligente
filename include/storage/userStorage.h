@@ -3,7 +3,7 @@
 
 void inicializarArmazenamentoUsuarios();
 
-void salvarUsuarios();
+bool salvarUsuarios();
 
 void carregarUsuarios();
 
