@@ -19,6 +19,9 @@
 #include "tasks/core1Tasks.h"
 #include "secrets.h"
 #include "time/systemClock.h"
+#include "system/systemLogger.h"
+#include "system/systemTelemetry.h"
+#include "routes/logRoutes.h"
 
 const int LED_PIN = 2;
 const char* ssid = WIFI_SSID;
@@ -31,6 +34,7 @@ static uint32_t ultimaTentativaWiFi = 0;
 static bool wifiConectado = false;
 
 static void atualizarConexaoWiFi() {
+    ScopedFunctionTimer timer(FunctionMetric::WIFI_UPDATE);
     const uint32_t agora = millis();
     const bool conectado = WiFi.status() == WL_CONNECTED;
 
@@ -39,8 +43,10 @@ static void atualizarConexaoWiFi() {
         Serial.println("Wi-Fi conectado!");
         Serial.print("IP do ESP32: ");
         Serial.println(WiFi.localIP());
+        registrarLog(LogLevel::INFO, "Wi-Fi conectado; IP " + WiFi.localIP().toString());
     } else if (!conectado && wifiConectado) {
         Serial.println("Wi-Fi desconectado; tentando reconectar.");
+        registrarLog(LogLevel::WARNING, "Wi-Fi desconectado; tentando reconectar.");
     }
 
     wifiConectado = conectado;
@@ -73,6 +79,12 @@ void setup() {
     iniciarRelogioSistema();
 
     inicializarArmazenamentoUsuarios();
+    if (!inicializarLogs()) {
+        Serial.println("Sistema de logs persistentes indisponivel.");
+    } else {
+        registrarLog(LogLevel::INFO, "Sistema iniciado.");
+    }
+
     inicializarHistoricoPorta();
     inicializarNFC();
 
@@ -85,6 +97,7 @@ void setup() {
     inicializarMonitorPerformance();
     configurarRotasPerformance(server);
     configurarRotasOta(server);
+    configurarRotasLogs(server);
     iniciarTelegram();
 
     server.begin();
@@ -93,6 +106,7 @@ void setup() {
     iniciarCore1Task();
 
     Serial.println("Servidor Web iniciado!");
+    registrarLog(LogLevel::INFO, "Servidor web iniciado.");
 }
 
 void loop() {

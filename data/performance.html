@@ -89,6 +89,38 @@
             </section>
         </div>
 
+        <section class="page-section telemetry-section" aria-labelledby="telemetryHeading">
+            <h3 id="telemetryHeading">Tasks e tempos de execução</h3>
+            <p>Total de tasks do FreeRTOS: <strong id="systemTaskCount">--</strong></p>
+            <div class="task-core-grid">
+                <div>
+                    <h4>Core 0</h4>
+                    <p>Tasks da aplicação: <strong id="core0TaskCount">--</strong></p>
+                    <ul id="core0TaskList" class="telemetry-task-list"></ul>
+                </div>
+                <div>
+                    <h4>Core 1</h4>
+                    <p>Tasks da aplicação: <strong id="core1TaskCount">--</strong></p>
+                    <ul id="core1TaskList" class="telemetry-task-list"></ul>
+                </div>
+            </div>
+            <h4>Execução das funções monitoradas</h4>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Função</th>
+                            <th>Chamadas</th>
+                            <th>Mín. (ms)</th>
+                            <th>Média (ms)</th>
+                            <th>Máx. (ms)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="functionMetricsBody"></tbody>
+                </table>
+            </div>
+        </section>
+
         <section class="page-section sensor-history-section" aria-labelledby="sensorHistoryHeading">
             <h3 id="sensorHistoryHeading">Histórico do sensor da porta</h3>
             <p>Estado da porta nas últimas 24 horas. As medições são registradas quando o relógio do ESP32 está sincronizado.</p>

@@ -536,6 +536,78 @@ if (document.getElementById("tempoResposta")) {
     setInterval(carregarPerformance, 1000);
 }
 
+async function carregarTelemetriaPerformance() {
+    try {
+        const resposta = await fetch("/api/performance/telemetria", {
+            cache: "no-store"
+        });
+        if (!resposta.ok) {
+            throw new Error(`Falha ao carregar telemetria: HTTP ${resposta.status}`);
+        }
+
+        const telemetria = await resposta.json();
+        const totalTasks = document.getElementById("systemTaskCount");
+        const core0Count = document.getElementById("core0TaskCount");
+        const core1Count = document.getElementById("core1TaskCount");
+        const core0List = document.getElementById("core0TaskList");
+        const core1List = document.getElementById("core1TaskList");
+        const metricsBody = document.getElementById("functionMetricsBody");
+
+        if (totalTasks) {
+            totalTasks.textContent = telemetria.tasksSistema;
+        }
+
+        for (const [core, list, count] of [
+            [0, core0List, core0Count],
+            [1, core1List, core1Count]
+        ]) {
+            const tasks = telemetria.tarefasAplicacao.filter(
+                tarefa => tarefa.core === core
+            );
+            if (count) {
+                count.textContent = tasks.length;
+            }
+            if (list) {
+                list.replaceChildren();
+                for (const tarefa of tasks) {
+                    const item = document.createElement("li");
+                    item.textContent = tarefa.nome;
+                    list.appendChild(item);
+                }
+            }
+        }
+
+        if (metricsBody) {
+            metricsBody.replaceChildren();
+            for (const metrica of telemetria.funcoes) {
+                const row = document.createElement("tr");
+                const values = [
+                    metrica.nome,
+                    metrica.chamadas,
+                    metrica.minimoUs,
+                    metrica.medioUs,
+                    metrica.maximoUs
+                ];
+                for (const [index, value] of values.entries()) {
+                    const cell = document.createElement("td");
+                    cell.textContent = index < 2
+                        ? value.toLocaleString("pt-BR")
+                        : (value / 1000).toFixed(3);
+                    row.appendChild(cell);
+                }
+                metricsBody.appendChild(row);
+            }
+        }
+    } catch (erro) {
+        console.error("Erro ao carregar telemetria de performance:", erro);
+    }
+}
+
+if (document.getElementById("functionMetricsBody")) {
+    carregarTelemetriaPerformance();
+    setInterval(carregarTelemetriaPerformance, 5000);
+}
+
 const doorHistoryCanvas = document.getElementById("doorHistoryChart");
 
 if (doorHistoryCanvas) {
@@ -799,6 +871,40 @@ if (document.getElementById("listaUsuarios")) {
 
 if (document.getElementById("totalUsuarios")) {
     carregarPainel();
+}
+
+async function carregarLogsSistema() {
+    const logs = document.getElementById("systemLogs");
+    const mensagem = document.getElementById("logsMessage");
+    if (!logs) {
+        return;
+    }
+
+    try {
+        const resposta = await fetch("/api/logs", { cache: "no-store" });
+        if (!resposta.ok) {
+            throw new Error(resposta.status === 401
+                ? "Entre como administrador para consultar os logs."
+                : `Falha ao carregar os logs: HTTP ${resposta.status}`);
+        }
+        logs.textContent = await resposta.text() || "Nenhum log registrado.";
+        if (mensagem) {
+            mensagem.textContent = "";
+        }
+        logs.scrollTop = logs.scrollHeight;
+    } catch (erro) {
+        logs.textContent = "";
+        if (mensagem) {
+            mensagem.textContent = erro.message;
+            mensagem.classList.add("is-error");
+        }
+        console.error("Erro ao carregar logs do sistema:", erro);
+    }
+}
+
+if (document.getElementById("systemLogs")) {
+    carregarLogsSistema();
+    setInterval(carregarLogsSistema, 5000);
 }
 
 if (
