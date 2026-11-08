@@ -4,7 +4,9 @@ Sistema de controle de acesso baseado em **ESP32**, desenvolvido para a discipli
 
 O projeto tem como objetivo desenvolver um sistema capaz de controlar e registrar acessos utilizando comunicação sem fio, autenticação por credencial NFC e, posteriormente, acionamento de uma fechadura elétrica.
 
-> **Status atual:** início do desenvolvimento. A estrutura do projeto já foi criada e a implementação do firmware ainda está começando.
+> **Status atual:** o firmware já oferece interface administrativa local, gestão
+> de usuários, leitura NFC, histórico da porta, OTA e monitoramento básico de
+> desempenho.
 
 ---
 
@@ -327,11 +329,27 @@ esse limite tornou o período exibido parcial.
 A página **Sobre** (`/about.html`) apresenta a universidade, integrantes,
 emails de contato e o link do repositório do projeto.
 
+## Logs e telemetria
+
+O painel autenticado (`/panel.html`) mostra os logs recentes em formato de
+console e permite exportá-los como `logs.txt`. O ESP32 mantém os últimos 1000
+registros em `/logs.txt`, com níveis `INFO`, `WARNING` e `ERROR`. Quando o
+horário ainda não foi sincronizado por NTP, o registro informa o uptime em vez
+de apresentar uma data incorreta. A consulta e a exportação dos logs exigem
+sessão administrativa.
+
+A página **Performance** apresenta a contagem total de tasks do FreeRTOS e as
+tasks da aplicação fixadas em cada core. Também acompanha chamadas, duração
+mínima, média e máxima de cinco operações: leitura NFC, autenticação NFC,
+vinculação NFC, processamento do histórico da porta e atualização da conexão
+Wi-Fi. Essas métricas de duração são acumuladas em RAM e reiniciam junto com o
+dispositivo.
+
 ---
 
 # 7. Interface Web
 
-A interface web será inicialmente armazenada no LittleFS do ESP32.
+A interface web é armazenada no LittleFS do ESP32.
 
 Fluxo:
 
@@ -350,7 +368,8 @@ Navegador
     └── app.js
 ```
 
-A interface deverá posteriormente evoluir para uma interface administrativa do sistema.
+A interface administrativa inclui painel, usuários, configurações,
+performance e informações do projeto.
 
 ---
 
@@ -550,14 +569,10 @@ Essa ordem pode ser alterada conforme as necessidades do projeto.
 
 # 13. Métricas e desempenho
 
-O projeto deverá posteriormente considerar métricas relacionadas ao desempenho do sistema, incluindo:
-
-* utilização de CPU;
-* utilização de RAM;
-* tempo de resposta;
-* utilização de memória Flash.
-
-Essas métricas serão utilizadas principalmente nas etapas relacionadas ao desempenho e à utilização de processamento paralelo/concurrente.
+A página **Performance** apresenta utilização de CPU por core, uso de heap e
+Flash, tempo de resposta, histórico do sensor da porta, contagem de tasks e
+tempos de execução de cinco operações principais. Os valores de duração são
+estatísticas coletadas desde a inicialização atual do ESP32.
 
 ---
 
@@ -611,19 +626,14 @@ O projeto deve evitar complexidade prematura.
 
 * [x] Estrutura inicial do projeto
 * [x] Diretórios `src`, `include` e `data`
-* [x] Estrutura inicial da interface web
-* [x] Configuração inicial do projeto PlatformIO
+* [x] Interface web administrativa e armazenamento LittleFS
+* [x] Monitoramento básico de performance e histórico da porta
+* [x] Logs persistentes e telemetria das tasks/operações
 
 ### Em desenvolvimento
 
-* [ ] Primeiro firmware
-* [ ] Teste do ESP32
-* [ ] Comunicação serial
-* [ ] Conexão Wi-Fi
-* [ ] Web Server
-* [ ] LittleFS
-* [ ] Interface web
-* [ ] API
+* [ ] Testes integrados no ESP32 físico
+* [ ] Configuração de Wi-Fi por modo de provisionamento
 
 ### Futuro
 
@@ -636,14 +646,11 @@ O projeto deve evitar complexidade prematura.
 * [ ] Fechadura elétrica
 * [ ] Controle de usuários
 * [ ] Controle de acessos temporários
-* [ ] Logs
 * [ ] Telegram
 * [ ] Modo offline
 * [ ] Sincronização
-* [ ] FreeRTOS
 * [ ] Comunicação entre tarefas
 * [ ] Paralelismo
-* [ ] Métricas de desempenho
 
 ---
 
