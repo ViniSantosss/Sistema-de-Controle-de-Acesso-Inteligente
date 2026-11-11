@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <cstdio>
+#include <unistd.h>
 
 #include "storage/userStorage.h"
 #include "models/user.h"
@@ -9,9 +11,15 @@ extern Usuario usuarios[];
 extern int quantidadeUsuarios;
 extern int proximoId;
 
+static constexpr char ARQUIVO_USUARIOS[] = "/usuarios.json";
+static constexpr char ARQUIVO_TEMPORARIO[] = "/usuarios.tmp";
+static constexpr char PONTO_MONTAGEM[] = "/littlefs";
+static bool armazenamentoDisponivel = false;
+
 void inicializarArmazenamentoUsuarios() {
 
-    if (!LittleFS.begin(true)) {
+    armazenamentoDisponivel = LittleFS.begin(false, PONTO_MONTAGEM);
+    if (!armazenamentoDisponivel) {
         Serial.println("Erro ao iniciar o armazenamento de usuarios.");
         return;
     }
@@ -22,19 +30,16 @@ void inicializarArmazenamentoUsuarios() {
 }
 
 bool salvarUsuarios() {
-
-    File arquivo = LittleFS.open("/usuarios.json", "w");
-
-    if (!arquivo) {
-        Serial.println("Erro ao abrir usuarios.json para escrita.");
+    if (!armazenamentoDisponivel) {
         return false;
     }
 
     JsonDocument documento;
+    JsonArray lista = documento.to<JsonArray>();
 
     for (int i = 0; i < quantidadeUsuarios; i++) {
 
-        JsonObject usuario = documento.add<JsonObject>();
+        JsonObject usuario = lista.add<JsonObject>();
 
         usuario["id"] = usuarios[i].id;
         usuario["nome"] = usuarios[i].nome;
@@ -44,12 +49,37 @@ bool salvarUsuarios() {
         usuario["dataExpiracao"] = usuarios[i].dataExpiracao;
     }
 
-    size_t bytesEsperados = measureJson(documento);
-    size_t bytesGravados = serializeJson(documento, arquivo);
+    if (documento.overflowed()) {
+        Serial.println("Memoria insuficiente para salvar usuarios.");
+        return false;
+    }
 
-    arquivo.close();
+    const String caminhoTemporario = String(PONTO_MONTAGEM) + ARQUIVO_TEMPORARIO;
+    FILE* arquivo = fopen(caminhoTemporario.c_str(), "wb");
+    if (arquivo == nullptr) {
+        Serial.println("Erro ao abrir arquivo temporario de usuarios.");
+        return false;
+    }
 
-    if (bytesGravados != bytesEsperados) {
+    struct GravadorArquivo {
+        FILE* arquivo;
+
+        size_t write(uint8_t byte) {
+            return fputc(byte, arquivo) == EOF ? 0 : 1;
+        }
+
+        size_t write(const uint8_t* dados, size_t tamanho) {
+            return fwrite(dados, 1, tamanho, arquivo);
+        }
+    } gravador{arquivo};
+
+    const bool gravacaoCompleta =
+        serializeJson(documento, gravador) == measureJson(documento) &&
+        fflush(arquivo) == 0 && fsync(fileno(arquivo)) == 0;
+    const bool arquivoFechado = fclose(arquivo) == 0;
+    if (!gravacaoCompleta || !arquivoFechado ||
+        !LittleFS.rename(ARQUIVO_TEMPORARIO, ARQUIVO_USUARIOS)) {
+        LittleFS.remove(ARQUIVO_TEMPORARIO);
         Serial.println("Erro ao gravar todos os usuarios em usuarios.json.");
         return false;
     }
@@ -60,12 +90,12 @@ bool salvarUsuarios() {
 
 void carregarUsuarios() {
 
-    if (!LittleFS.exists("/usuarios.json")) {
+    if (!LittleFS.exists(ARQUIVO_USUARIOS)) {
         Serial.println("Nenhum arquivo de usuarios encontrado.");
         return;
     }
 
-    File arquivo = LittleFS.open("/usuarios.json", "r");
+    File arquivo = LittleFS.open(ARQUIVO_USUARIOS, "r");
 
     if (!arquivo) {
         Serial.println("Erro ao abrir usuarios.json.");

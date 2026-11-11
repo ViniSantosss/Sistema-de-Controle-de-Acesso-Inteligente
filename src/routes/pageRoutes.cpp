@@ -2,6 +2,18 @@
 
 #include <LittleFS.h>
 
+#include "routes/authRoutes.h"
+
+static bool exigirSessaoParaPagina(WebServer& server) {
+    server.sendHeader("Cache-Control", "no-store");
+    if (administradorAutenticado(server)) {
+        return true;
+    }
+    server.sendHeader("Location", "/");
+    server.send(303, "text/plain", "Sessao administrativa necessaria.");
+    return false;
+}
+
 void configurarRotasPaginas(WebServer& server) {
 
     server.on("/", HTTP_GET, [&server]() {
@@ -17,6 +29,9 @@ void configurarRotasPaginas(WebServer& server) {
     });
 
     server.on("/panel.html", HTTP_GET, [&server]() {
+        if (!exigirSessaoParaPagina(server)) {
+            return;
+        }
         File file = LittleFS.open("/panel.html", "r");
 
         if (!file) {
@@ -29,6 +44,9 @@ void configurarRotasPaginas(WebServer& server) {
     });
 
     server.on("/users.html", HTTP_GET, [&server]() {
+        if (!exigirSessaoParaPagina(server)) {
+            return;
+        }
         File file = LittleFS.open("/users.html", "r");
 
         if (!file) {
@@ -41,6 +59,9 @@ void configurarRotasPaginas(WebServer& server) {
     });
 
     server.on("/config.html", HTTP_GET, [&server]() {
+        if (!exigirSessaoParaPagina(server)) {
+            return;
+        }
         File file = LittleFS.open("/config.html", "r");
 
         if (!file) {
@@ -53,6 +74,9 @@ void configurarRotasPaginas(WebServer& server) {
     });
 
     server.on("/performance.html", HTTP_GET, [&server]() {
+        if (!exigirSessaoParaPagina(server)) {
+            return;
+        }
         File file = LittleFS.open("/performance.html", "r");
 
         if (!file) {
@@ -101,7 +125,7 @@ void configurarRotasPaginas(WebServer& server) {
     });
 
     server.on("/icons.svg", HTTP_GET, [&server]() {
-        File file = LittleFS.open("/icons.svg", "image/svg+xml");
+        File file = LittleFS.open("/icons.svg", "r");
 
         if (!file) {
             server.send(404, "text/plain", "icons.svg nao encontrado");

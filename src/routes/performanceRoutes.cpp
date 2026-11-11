@@ -1,4 +1,5 @@
 #include "routes/performanceRoutes.h"
+#include "routes/authRoutes.h"
 #include "sensors/doorHistory.h"
 
 #include <LittleFS.h>
@@ -88,6 +89,9 @@ void inicializarMonitorPerformance() {
 
 void configurarRotasPerformance(WebServer& server) {
     server.on("/api/historico-sensor", HTTP_GET, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
         server.send(
             200,
             "application/json",
@@ -96,6 +100,9 @@ void configurarRotasPerformance(WebServer& server) {
     });
 
     server.on("/api/performance/telemetria", HTTP_GET, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
         JsonDocument documento;
         documento["tasksSistema"] = uxTaskGetNumberOfTasks();
         documento["tasksCore0"] = 1;
@@ -133,6 +140,9 @@ void configurarRotasPerformance(WebServer& server) {
     });
 
     server.on("/api/performance", HTTP_GET, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
         if (!monitorPerformanceAtivo) {
             server.send(
                 503,

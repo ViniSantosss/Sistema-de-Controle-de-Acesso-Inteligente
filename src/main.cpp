@@ -13,10 +13,9 @@
 #include "routes/performanceRoutes.h"
 #include "routes/otaRoutes.h"
 #include "nfc/nfcManager.h"
+#include "hardware/doorLock.h"
 #include "sensors/doorHistory.h"
 
-#include "tasks/core0Tasks.h"
-#include "tasks/core1Tasks.h"
 #include "tasks/core0Tasks.h"
 #include "tasks/core1Tasks.h"
 #include "secrets.h"
@@ -67,6 +66,7 @@ void setup() {
 
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, LOW);
+    inicializarTranca();
 
     Serial.println();
     Serial.println("================================");
@@ -101,9 +101,6 @@ void setup() {
     configurarRotasOta(server);
     configurarRotasLogs(server);
     iniciarTelegram();
-
-    iniciarTasksCore0();
-    iniciarTasksCore1();
 
     server.begin();
 

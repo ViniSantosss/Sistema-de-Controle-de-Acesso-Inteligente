@@ -6,6 +6,18 @@
 static const char NOME_COOKIE_SESSAO[] = "esp32_admin_session";
 static String tokenSessaoAdministrador;
 
+static bool origemAdministrativaPermitida(WebServer& server) {
+#ifdef ADMIN_PROXY_IP
+    IPAddress ipProxy;
+    return ipProxy.fromString(ADMIN_PROXY_IP) &&
+        server.client().remoteIP() == ipProxy &&
+        server.header("X-Forwarded-Proto") == "https";
+#else
+    (void)server;
+    return true;
+#endif
+}
+
 static String criarTokenSessao() {
     char token[33];
     for (size_t i = 0; i < 4; i++) {
@@ -20,18 +32,19 @@ static String criarTokenSessao() {
 }
 
 bool administradorAutenticado(WebServer& server) {
-    if (tokenSessaoAdministrador.isEmpty()) {
+    if (tokenSessaoAdministrador.isEmpty() || !origemAdministrativaPermitida(server)) {
         return false;
     }
 
     const String cookies = server.header("Cookie");
     const String prefixo = String(NOME_COOKIE_SESSAO) + "=";
+    const int tamanhoCookies = static_cast<int>(cookies.length());
     int inicio = 0;
 
-    while (inicio < cookies.length()) {
+    while (inicio < tamanhoCookies) {
         int fim = cookies.indexOf(';', inicio);
         if (fim < 0) {
-            fim = cookies.length();
+            fim = tamanhoCookies;
         }
 
         String cookie = cookies.substring(inicio, fim);
@@ -57,11 +70,29 @@ bool administradorAutenticado(WebServer& server) {
     return false;
 }
 
+bool exigirSessaoAdministrativa(WebServer& server) {
+    server.sendHeader("Cache-Control", "no-store");
+    if (administradorAutenticado(server)) {
+        return true;
+    }
+    server.send(401, "application/json", "{\"erro\":\"Sessao administrativa necessaria.\"}");
+    return false;
+}
+
 void configurarRotasAuth(WebServer& server) {
+#ifdef ADMIN_PROXY_IP
+    const char* cabecalhos[] = {"Cookie", "X-Forwarded-Proto"};
+#else
     const char* cabecalhos[] = {"Cookie"};
-    server.collectHeaders(cabecalhos, 1);
+#endif
+    server.collectHeaders(cabecalhos, sizeof(cabecalhos) / sizeof(cabecalhos[0]));
 
     server.on("/api/login", HTTP_POST, [&server]() {
+        server.sendHeader("Cache-Control", "no-store");
+        if (!origemAdministrativaPermitida(server)) {
+            server.send(403, "application/json", "{\"erro\":\"Acesse pelo endereco HTTPS do proxy.\"}");
+            return;
+        }
 
         if (!server.hasArg("usuario") || !server.hasArg("senha")) {
             server.send(
@@ -77,12 +108,12 @@ void configurarRotasAuth(WebServer& server) {
 
         if (usuario == ESP32_USER && senha == ESP32_PASSWORD) {
             tokenSessaoAdministrador = criarTokenSessao();
-            server.sendHeader(
-                "Set-Cookie",
-                String(NOME_COOKIE_SESSAO) + "=" + tokenSessaoAdministrador +
-                    "; Path=/; HttpOnly; SameSite=Strict"
-            );
-            server.sendHeader("Cache-Control", "no-store");
+            String cookie = String(NOME_COOKIE_SESSAO) + "=" + tokenSessaoAdministrador +
+                "; Path=/; HttpOnly; SameSite=Strict";
+#ifdef ADMIN_PROXY_IP
+            cookie += "; Secure";
+#endif
+            server.sendHeader("Set-Cookie", cookie);
             server.send(
                 200,
                 "application/json",

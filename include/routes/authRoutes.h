@@ -5,5 +5,6 @@
 
 void configurarRotasAuth(WebServer& server);
 bool administradorAutenticado(WebServer& server);
+bool exigirSessaoAdministrativa(WebServer& server);
 
 #endif

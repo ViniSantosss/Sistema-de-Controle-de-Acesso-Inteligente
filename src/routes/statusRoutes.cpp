@@ -1,10 +1,14 @@
 #include "routes/statusRoutes.h"
+#include "routes/authRoutes.h"
 
 #include <ArduinoJson.h>
 #include <WiFi.h>
 
 void configurarRotasStatus(WebServer& server) {
     server.on("/api/status", HTTP_GET, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
         JsonDocument documento;
         documento["status"] = "online";
         documento["wifi"] = WiFi.status() == WL_CONNECTED;

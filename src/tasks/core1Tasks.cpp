@@ -1,91 +1,74 @@
 #include "tasks/core1Tasks.h"
 
-#include "nfc/nfcManager.h"
-#include "routes/userRoutes.h"
-#include "telegram/telegramBot.h"
-#include "system/systemLogger.h"
-
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-void tarefaCore1(void* parametro) {
+#include "nfc/nfcManager.h"
+#include "routes/userRoutes.h"
+#include "system/systemLogger.h"
+#include "telegram/telegramBot.h"
 
+namespace {
+
+void processarCartao(const String& uid) {
+    String nomeUsuario;
+    String tipoAcesso;
+    String dataExpiracao;
+    switch (processarLeituraNFC(uid, nomeUsuario, tipoAcesso, dataExpiracao)) {
+        case ResultadoLeituraNFC::CHAVE_VINCULADA:
+            registrarLog(LogLevel::INFO, "Chave NFC vinculada com sucesso.");
+            notificarChaveNFCVinculada(nomeUsuario);
+            break;
+        case ResultadoLeituraNFC::CHAVE_JA_CADASTRADA:
+            registrarLog(LogLevel::WARNING, "Chave NFC ja vinculada a outro usuario.");
+            notificarChaveNFCDuplicada();
+            break;
+        case ResultadoLeituraNFC::VINCULACAO_FALHOU:
+            registrarLog(LogLevel::ERROR, "Nao foi possivel vincular a chave NFC.");
+            notificarFalhaVinculacaoChaveNFC();
+            break;
+        case ResultadoLeituraNFC::AUTORIZADO:
+            registrarLog(LogLevel::INFO, "Acesso NFC autorizado.");
+            notificarAcessoAutorizado(nomeUsuario, tipoAcesso);
+            break;
+        case ResultadoLeituraNFC::CHAVE_DESCONHECIDA:
+            registrarLog(LogLevel::WARNING, "Acesso NFC negado: credencial desconhecida.");
+            notificarAcessoNegadoChaveDesconhecida();
+            break;
+        case ResultadoLeituraNFC::USUARIO_DESATIVADO:
+            registrarLog(LogLevel::WARNING, "Acesso NFC negado: usuario desativado.");
+            notificarAcessoNegadoUsuarioDesativado(nomeUsuario);
+            break;
+        case ResultadoLeituraNFC::CHAVE_EXPIRADA:
+            registrarLog(LogLevel::WARNING, "Acesso NFC negado: credencial expirada.");
+            notificarAcessoNegadoChaveExpirada(nomeUsuario, dataExpiracao);
+            break;
+        case ResultadoLeituraNFC::VALIDADE_INDISPONIVEL:
+            registrarLog(LogLevel::WARNING, "Acesso NFC negado: validade temporal nao verificavel.");
+            notificarAcessoNegadoValidadeIndisponivel(nomeUsuario);
+            break;
+    }
+}
+
+void tarefaCore1(void*) {
     String uid;
     bool aguardandoRemocaoCartao = false;
 
     while (true) {
-        if (aguardandoRemocaoCartao) {
-            if (!lerUID(uid)) {
-                aguardandoRemocaoCartao = false;
-            }
-        } else if (lerUID(uid)) {
-
-            Serial.print("UID detectado: ");
-            Serial.println(uid);
-
-            if (estaAguardandoChaveNFC()) {
-                String nomeUsuario;
-                ResultadoVinculacaoNFC resultado =
-                    vincularChaveNFC(uid, nomeUsuario);
-
-                switch (resultado) {
-                    case ResultadoVinculacaoNFC::SUCESSO:
-                        Serial.println("Chave NFC vinculada com sucesso.");
-                        notificarChaveNFCVinculada(nomeUsuario);
-                        break;
-                    case ResultadoVinculacaoNFC::CHAVE_JA_CADASTRADA:
-                        Serial.println("Chave NFC ja vinculada a outro usuario.");
-                        notificarChaveNFCDuplicada();
-                        break;
-                    case ResultadoVinculacaoNFC::FALHA:
-                        Serial.println("Nao foi possivel vincular a chave NFC.");
-                        notificarFalhaVinculacaoChaveNFC();
-                        break;
-                }
-
-            } else {
-                String nomeUsuario;
-                String tipoAcesso;
-                String dataExpiracao;
-                ResultadoAutenticacaoNFC resultado =
-                    autenticarChaveNFC(
-                        uid,
-                        nomeUsuario,
-                        tipoAcesso,
-                        dataExpiracao
-                    );
-
-                switch (resultado) {
-                    case ResultadoAutenticacaoNFC::AUTORIZADO:
-                        notificarAcessoAutorizado(nomeUsuario, tipoAcesso);
-                        break;
-                    case ResultadoAutenticacaoNFC::CHAVE_DESCONHECIDA:
-                        notificarAcessoNegadoChaveDesconhecida();
-                        break;
-                    case ResultadoAutenticacaoNFC::USUARIO_DESATIVADO:
-                        notificarAcessoNegadoUsuarioDesativado(nomeUsuario);
-                        break;
-                    case ResultadoAutenticacaoNFC::CHAVE_EXPIRADA:
-                        notificarAcessoNegadoChaveExpirada(
-                            nomeUsuario,
-                            dataExpiracao
-                        );
-                        break;
-                    case ResultadoAutenticacaoNFC::VALIDADE_INDISPONIVEL:
-                        notificarAcessoNegadoValidadeIndisponivel(nomeUsuario);
-                        break;
-                }
-            }
-
+        const bool cartaoPresente = lerUID(uid);
+        if (!cartaoPresente) {
+            aguardandoRemocaoCartao = false;
+        } else if (!aguardandoRemocaoCartao) {
+            processarCartao(uid);
             aguardandoRemocaoCartao = true;
         }
-
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
-void iniciarTasksCore1() {
+}
 
+void iniciarTasksCore1() {
     const BaseType_t resultado = xTaskCreatePinnedToCore(
         tarefaCore1,
         "Core1Task",

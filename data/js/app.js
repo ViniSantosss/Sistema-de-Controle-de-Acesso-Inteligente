@@ -2,6 +2,15 @@ const usuarioForm = document.getElementById("usuarioForm");
 
 const loginForm = document.getElementById("loginForm");
 
+async function fetchAdministrativo(endpoint, opcoes) {
+    const resposta = await fetch(endpoint, opcoes);
+    if (resposta.status === 401) {
+        window.location.replace("/");
+        throw new Error("A sessão administrativa terminou.");
+    }
+    return resposta;
+}
+
 if (loginForm) {
     loginForm.addEventListener("submit", async function (event) {
         event.preventDefault();
@@ -99,7 +108,7 @@ if (usuarioForm) {
         }
 
         try {
-            const resposta = await fetch(
+            const resposta = await fetchAdministrativo(
                 `/api/usuarios?${parametros.toString()}`,
                 {
                     method: usuarioId ? "PUT" : "POST"
@@ -140,7 +149,7 @@ function escaparHtml(valor) {
 
 async function carregarUsuarios() {
     try {
-        const resposta = await fetch("/api/usuarios");
+        const resposta = await fetchAdministrativo("/api/usuarios");
 
         const usuarios = await resposta.json();
 
@@ -242,7 +251,7 @@ async function carregarUsuarios() {
 
 async function editarUsuario(id) {
     try {
-        const resposta = await fetch("/api/usuarios");
+        const resposta = await fetchAdministrativo("/api/usuarios");
         if (!resposta.ok) {
             throw new Error(`Falha ao carregar usuários: HTTP ${resposta.status}`);
         }
@@ -279,7 +288,7 @@ async function atribuirChaveNFC(id) {
 
     try {
 
-        const resposta = await fetch(
+        const resposta = await fetchAdministrativo(
             `/api/usuarios/aguardar-chave?id=${id}`,
             {
                 method: "POST"
@@ -289,7 +298,7 @@ async function atribuirChaveNFC(id) {
         const dados = await resposta.json();
 
         if (!resposta.ok) {
-            console.error(dados.erro);
+            alert(dados.erro);
             return;
         }
 
@@ -308,7 +317,7 @@ async function atribuirChaveNFC(id) {
 
 async function desativarUsuario(id) {
     try {
-        const resposta = await fetch(
+        const resposta = await fetchAdministrativo(
             `/api/usuarios/desativar?id=${id}`,
             {
                 method: "POST"
@@ -318,7 +327,7 @@ async function desativarUsuario(id) {
         const dados = await resposta.json();
 
         if (!resposta.ok) {
-            console.error(dados.erro);
+            document.getElementById("mensagem").textContent = dados.erro;
             return;
         }
 
@@ -332,7 +341,7 @@ async function desativarUsuario(id) {
 
 async function excluirUsuario(id) {
     try {
-        const resposta = await fetch(
+        const resposta = await fetchAdministrativo(
             `/api/usuarios?id=${id}`,
             {
                 method: "DELETE"
@@ -342,7 +351,7 @@ async function excluirUsuario(id) {
         const dados = await resposta.json();
 
         if (!resposta.ok) {
-            console.error(dados.erro);
+            document.getElementById("mensagem").textContent = dados.erro;
             return;
         }
 
@@ -359,7 +368,7 @@ async function carregarPainel() {
     const usuariosDesativados = document.getElementById("usuariosDesativados");
 
     try {
-        const respostaUsuarios = await fetch("/api/usuarios");
+        const respostaUsuarios = await fetchAdministrativo("/api/usuarios");
         if (!respostaUsuarios.ok) {
             throw new Error(`Falha ao carregar usuários: HTTP ${respostaUsuarios.status}`);
         }
@@ -394,7 +403,7 @@ async function carregarStatusRede() {
     const painelIp = document.getElementById("painelIp");
 
     try {
-        const respostaStatus = await fetch("/api/status");
+        const respostaStatus = await fetchAdministrativo("/api/status");
         if (!respostaStatus.ok) {
             throw new Error(`Falha ao carregar status da rede: HTTP ${respostaStatus.status}`);
         }
@@ -441,7 +450,7 @@ if (deepSleepButton) {
         deepSleepMessage.classList.remove("is-error");
 
         try {
-            const resposta = await fetch("/api/deep-sleep", {
+            const resposta = await fetchAdministrativo("/api/deep-sleep", {
                 method: "POST"
             });
             const dados = await resposta.json();
@@ -458,7 +467,8 @@ if (deepSleepButton) {
             `;
             deepSleepControl.classList.add("is-on");
             deepSleepButton.textContent = "Deep Sleep ligado";
-            deepSleepMessage.textContent = "Para sair do Deep Sleep, reinicie o ESP32.";
+            deepSleepMessage.textContent =
+                `O ESP32 vai despertar em cerca de ${dados.segundos} segundos. Depois, entre novamente.`;
         } catch (erro) {
             console.error("Erro ao ativar Deep Sleep:", erro);
             deepSleepButton.disabled = false;
@@ -471,7 +481,7 @@ if (deepSleepButton) {
 
 async function carregarPerformance() {
     try {
-        const resposta = await fetch("/api/performance");
+        const resposta = await fetchAdministrativo("/api/performance");
         const performance = await resposta.json();
 
         const tempoResposta = document.getElementById("tempoResposta");
@@ -538,7 +548,7 @@ if (document.getElementById("tempoResposta")) {
 
 async function carregarTelemetriaPerformance() {
     try {
-        const resposta = await fetch("/api/performance/telemetria", {
+        const resposta = await fetchAdministrativo("/api/performance/telemetria", {
             cache: "no-store"
         });
         if (!resposta.ok) {
@@ -718,7 +728,7 @@ if (doorHistoryCanvas) {
 
     async function carregarHistoricoPorta() {
         try {
-            const resposta = await fetch("/api/historico-sensor", { cache: "no-store" });
+            const resposta = await fetchAdministrativo("/api/historico-sensor", { cache: "no-store" });
             const dados = await resposta.json();
             if (!resposta.ok) {
                 throw new Error(dados.erro || "Não foi possível carregar o histórico.");
@@ -822,6 +832,10 @@ if (otaForm) {
         });
 
         requisicao.addEventListener("load", () => {
+            if (requisicao.status === 401) {
+                window.location.replace("/");
+                return;
+            }
             let dados;
             try {
                 dados = JSON.parse(requisicao.responseText);
@@ -881,7 +895,7 @@ async function carregarLogsSistema() {
     }
 
     try {
-        const resposta = await fetch("/api/logs", { cache: "no-store" });
+        const resposta = await fetchAdministrativo("/api/logs", { cache: "no-store" });
         if (!resposta.ok) {
             throw new Error(resposta.status === 401
                 ? "Entre como administrador para consultar os logs."

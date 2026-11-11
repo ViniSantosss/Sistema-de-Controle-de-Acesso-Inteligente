@@ -36,11 +36,11 @@ static void tarefaCore0(void* parametro) {
     while (true) {
         bool leituraAtual = digitalRead(PIN_SENSOR_PORTA);
 
-        if (leituraAtual == leituraAnterior) {
-            leiturasIguais++;
-        } else {
+        if (leituraAtual != leituraAnterior) {
             leituraAnterior = leituraAtual;
             leiturasIguais = 1;
+        } else if (leiturasIguais < LEITURAS_PARA_CONFIRMAR) {
+            leiturasIguais++;
         }
 
         // isso aqui serve para evitar que o estado da porta mude rapidamente, tipo se ela estiver meio aberta ou fechada, e o sensor ficar oscilando entre HIGH e LOW. A gente só considera que a porta mudou de estado se a leitura for consistente por um certo número de vezes.
@@ -76,7 +76,7 @@ static void tarefaCore0(void* parametro) {
 }
 
 // cria a task no core 0, que vai rodar a função tarefaCore0
-void iniciarCore0Task() {
+void iniciarTasksCore0() {
     const BaseType_t resultado = xTaskCreatePinnedToCore(
         tarefaCore0,
         "Core0Task",
