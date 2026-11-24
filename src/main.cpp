@@ -3,6 +3,7 @@
 #include <WebServer.h>
 
 #include "routes/statusRoutes.h"
+#include "network/wifiManager.h"
 #include "routes/deepSleepRoutes.h"
 #include "routes/authRoutes.h"
 #include "routes/pageRoutes.h"
@@ -25,8 +26,6 @@
 #include "routes/logRoutes.h"
 
 const int LED_PIN = 2;
-const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
 
 WebServer server(80);
 
@@ -57,7 +56,7 @@ static void atualizarConexaoWiFi() {
             INTERVALO_RECONEXAO_WIFI_MS) {
         ultimaTentativaWiFi = agora;
         Serial.println("Tentando reconectar ao Wi-Fi...");
-        WiFi.reconnect();
+        // A reconexao automatica e gerenciada pelo Wi-Fi.
     }
 }
 
@@ -74,9 +73,7 @@ void setup() {
     Serial.println("ESP32 iniciado!");
     Serial.println("================================");
 
-    WiFi.mode(WIFI_STA);
-    WiFi.setAutoReconnect(true);
-    WiFi.begin(ssid, password);
+    iniciarWiFi();
     ultimaTentativaWiFi = millis();
     verificarDespertarDeepSleep();
     iniciarRelogioSistema();
@@ -93,6 +90,7 @@ void setup() {
 
     configurarRotasStatus(server);
     configurarRotasAuth(server);
+    configurarRotasWiFi(server);
     configurarRotasPaginas(server);
     configurarRotasUsuarios(server);
     configurarRotasTelegram(server);
@@ -115,6 +113,7 @@ void setup() {
 void loop() {
     processarHistoricoPortaPendente();
     server.handleClient();
+    atualizarModoAP();
     atualizarConexaoWiFi();
     processarDeepSleepPendente();
     processarReinicioOtaPendente();

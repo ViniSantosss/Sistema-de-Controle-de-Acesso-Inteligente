@@ -72,6 +72,16 @@
             <p>Wi-Fi: <span id="wifiStatus">--</span></p>
             <p>Rede conectada: <span id="wifiSsid">--</span></p>
             <p>IP do ESP32: <span id="ip">--</span></p>
+            <button type="button" id="ativarWifiAP">Ativar ponto de acesso</button>
+            <p>Conecte-se à rede Controle-Acesso-Config com a senha administrativa e acesse 192.168.4.1. Entre novamente com sua conta.</p>
+            <form id="wifiConfigForm" class="settings-form">
+                <label for="novoSSID">Nova rede Wi-Fi</label>
+                <input id="novoSSID" maxlength="32" required>
+                <label for="novaSenhaWifi">Senha da rede</label>
+                <input id="novaSenhaWifi" type="password" minlength="8" maxlength="63" required>
+                <button type="submit">Salvar e conectar</button>
+            </form>
+            <p id="wifiConfigMessage" role="status"></p>
         </section>
 
         <section class="page-section ota-section" aria-labelledby="otaHeading">

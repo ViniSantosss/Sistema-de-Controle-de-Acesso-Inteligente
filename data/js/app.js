@@ -941,3 +941,33 @@ if (
 ) {
     carregarStatusRede();
 }
+
+const wifiConfigForm = document.getElementById("wifiConfigForm");
+if (wifiConfigForm) {
+    const mensagem = document.getElementById("wifiConfigMessage");
+    async function enviarConfigWifi(url, dados) {
+        try {
+            const resposta = await fetchAdministrativo(url, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(dados)
+            });
+            const resultado = await resposta.json();
+            if (!resposta.ok) throw new Error(resultado.erro);
+            mensagem.textContent = resultado.mensagem;
+        } catch (erro) {
+            mensagem.textContent = erro.message;
+        }
+    }
+    document.getElementById("ativarWifiAP").addEventListener("click", () =>
+        enviarConfigWifi("/api/wifi/ap", {}));
+    wifiConfigForm.addEventListener("submit", async evento => {
+        evento.preventDefault();
+        const senha = document.getElementById("novaSenhaWifi");
+        await enviarConfigWifi("/api/wifi/config", {
+            ssid: document.getElementById("novoSSID").value,
+            senha: senha.value
+        });
+        senha.value = "";
+    });
+}
