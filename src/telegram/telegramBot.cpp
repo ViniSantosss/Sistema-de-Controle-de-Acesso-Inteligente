@@ -53,6 +53,35 @@ static void tarefaEnvioTelegram(void* parametro) {
     }
 }
 
+// Executado somente antes de iniciar a task normal do Telegram.
+bool consultarDespertarTelegram(long& ultimoUpdate) {
+    WiFiClientSecure clienteConsulta;
+    clienteConsulta.setInsecure();
+    clienteConsulta.setHandshakeTimeout(5);
+    clienteConsulta.setTimeout(5);
+    UniversalTelegramBot consulta(TELEGRAM_BOT_TOKEN, clienteConsulta);
+    consulta.longPoll = 0;
+    const int quantidade = consulta.getUpdates(ultimoUpdate + 1);
+    bool acordar = false;
+    for (int i = 0; i < quantidade; i++) {
+        const auto& mensagem = consulta.messages[i];
+        if (mensagem.chat_id == String(TELEGRAM_CHAT_ID) &&
+            mensagem.from_id == String(TELEGRAM_CHAT_ID) &&
+            mensagem.text == "/acordar") {
+            acordar = true;
+        }
+    }
+    if (quantidade > 0) {
+        ultimoUpdate = consulta.last_message_received;
+        // Confirma o recebimento para evitar repetir comandos antigos.
+        if (acordar) {
+            consulta.getUpdates(ultimoUpdate + 1);
+            consulta.sendMessage(TELEGRAM_CHAT_ID, "ESP32 retornando ao funcionamento normal.", "");
+        }
+    }
+    return acordar;
+}
+
 void iniciarTelegram() {
     client.setInsecure();
     client.setHandshakeTimeout(5);

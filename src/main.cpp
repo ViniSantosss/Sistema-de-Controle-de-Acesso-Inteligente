@@ -78,6 +78,7 @@ void setup() {
     WiFi.setAutoReconnect(true);
     WiFi.begin(ssid, password);
     ultimaTentativaWiFi = millis();
+    verificarDespertarDeepSleep();
     iniciarRelogioSistema();
 
     inicializarArmazenamentoUsuarios();

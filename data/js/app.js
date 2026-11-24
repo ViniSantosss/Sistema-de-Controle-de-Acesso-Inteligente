@@ -443,6 +443,16 @@ if (deepSleepButton) {
     const deepSleepMessage = document.getElementById("deepSleepMessage");
     const deepSleepControl = document.getElementById("deepSleepControl");
 
+    const intervaloDeepSleep = document.getElementById("intervaloDeepSleep");
+    if (intervaloDeepSleep) {
+        fetchAdministrativo("/api/deep-sleep").then(r => {
+            if (!r.ok) throw new Error("Falha ao consultar intervalo");
+            return r.json();
+        }).then(dados => {
+            intervaloDeepSleep.value = String(dados.segundos);
+        }).catch(console.error);
+    }
+
     deepSleepButton.addEventListener("click", async function () {
         deepSleepButton.disabled = true;
         deepSleepButton.textContent = "Ativando Deep Sleep...";
@@ -451,7 +461,9 @@ if (deepSleepButton) {
 
         try {
             const resposta = await fetchAdministrativo("/api/deep-sleep", {
-                method: "POST"
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({segundos: Number(intervaloDeepSleep.value)})
             });
             const dados = await resposta.json();
 
@@ -468,7 +480,7 @@ if (deepSleepButton) {
             deepSleepControl.classList.add("is-on");
             deepSleepButton.textContent = "Deep Sleep ligado";
             deepSleepMessage.textContent =
-                `O ESP32 vai despertar em cerca de ${dados.segundos} segundos. Depois, entre novamente.`;
+                `O ESP32 consultará o Telegram a cada ${dados.segundos} segundos. Envie /acordar para retornar.`;
         } catch (erro) {
             console.error("Erro ao ativar Deep Sleep:", erro);
             deepSleepButton.disabled = false;

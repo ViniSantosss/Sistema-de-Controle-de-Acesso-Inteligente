@@ -2,6 +2,7 @@
 #define TELEGRAM_BOT_H
 
 void iniciarTelegram();
+bool consultarDespertarTelegram(long& ultimoUpdate);
 
 bool enviarMensagemTelegram(const String& mensagem);
 

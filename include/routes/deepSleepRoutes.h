@@ -3,6 +3,7 @@
 
 #include <WebServer.h>
 
+void verificarDespertarDeepSleep();
 void configurarRotasDeepSleep(WebServer& server);
 void processarDeepSleepPendente();
 
