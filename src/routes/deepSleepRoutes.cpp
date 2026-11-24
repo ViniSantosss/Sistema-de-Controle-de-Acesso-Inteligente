@@ -104,6 +104,7 @@ void configurarRotasDeepSleep(WebServer& server) {
 void processarDeepSleepPendente() {
     if (!deepSleepPendente || millis() - deepSleepSolicitadoEm < TEMPO_RESPOSTA_DEEP_SLEEP_MS) return;
     deepSleepPendente = false;
+    notificarDeepSleepImediato(intervaloRTC);
     desenergizarTranca();
     esp_deep_sleep_start();
 }

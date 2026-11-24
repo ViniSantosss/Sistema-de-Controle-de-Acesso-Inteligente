@@ -82,6 +82,18 @@ bool consultarDespertarTelegram(long& ultimoUpdate) {
     return acordar;
 }
 
+bool notificarDeepSleepImediato(uint32_t segundos) {
+    if (WiFi.status() != WL_CONNECTED) return false;
+    WiFiClientSecure clienteAviso;
+    clienteAviso.setInsecure();
+    clienteAviso.setHandshakeTimeout(5);
+    clienteAviso.setTimeout(5);
+    UniversalTelegramBot aviso(TELEGRAM_BOT_TOKEN, clienteAviso);
+    return aviso.sendMessage(TELEGRAM_CHAT_ID,
+        "Deep Sleep ativado. Intervalo de verificacao: " + String(segundos) +
+        " segundos. Envie /acordar para retornar ao funcionamento normal.", "");
+}
+
 void iniciarTelegram() {
     client.setInsecure();
     client.setHandshakeTimeout(5);

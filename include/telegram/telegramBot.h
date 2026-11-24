@@ -1,7 +1,10 @@
 #ifndef TELEGRAM_BOT_H
 #define TELEGRAM_BOT_H
 
+#include <Arduino.h>
+
 void iniciarTelegram();
+bool notificarDeepSleepImediato(uint32_t segundos);
 bool consultarDespertarTelegram(long& ultimoUpdate);
 
 bool enviarMensagemTelegram(const String& mensagem);
