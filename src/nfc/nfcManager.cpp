@@ -1,4 +1,5 @@
 #include "nfc/nfcManager.h"
+#include "sensors/sensorConfig.h"
 #include "system/systemLogger.h"
 #include "system/systemTelemetry.h"
 
@@ -70,7 +71,7 @@ bool lerUID(String& uid) {
         PN532_MIFARE_ISO14443A,
         uidBytes,
         &uidLength,
-        200
+        obterSensorConfig().nfcTimeout
     );
 
     if (!success) {

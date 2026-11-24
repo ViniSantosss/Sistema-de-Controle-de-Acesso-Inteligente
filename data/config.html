@@ -84,6 +84,23 @@
             <p id="wifiConfigMessage" role="status"></p>
         </section>
 
+        <section class="page-section">
+            <h3>Sensores</h3>
+            <p>Configure os intervalos de leitura e a confirmação do estado da porta.</p>
+            <form id="sensorConfigForm" class="settings-form" style="max-width:none;margin:12px 0 0;">
+                <label for="portaIntervalo">Intervalo do sensor magnético (ms)</label>
+                <input id="portaIntervalo" type="number" min="10" max="1000" value="10" required>
+                <label for="portaConfirmacao">Leituras consecutivas para confirmar a porta</label>
+                <input id="portaConfirmacao" type="number" min="1" max="20" value="5" required>
+                <label for="nfcIntervalo">Intervalo entre consultas NFC (ms)</label>
+                <input id="nfcIntervalo" type="number" min="50" max="2000" value="100" required>
+                <label for="nfcTimeout">Tempo limite da consulta NFC (ms)</label>
+                <input id="nfcTimeout" type="number" min="100" max="1000" value="200" required>
+                <button type="submit" style="justify-self:start" disabled>Salvar configurações</button>
+            </form>
+            <p id="sensorConfigMessage" role="status"></p>
+        </section>
+
         <section class="page-section ota-section" aria-labelledby="otaHeading">
             <h3 id="otaHeading">Atualização de Firmware / OTA</h3>
             <p>

@@ -971,3 +971,37 @@ if (wifiConfigForm) {
         senha.value = "";
     });
 }
+
+const sensorConfigForm = document.getElementById("sensorConfigForm");
+if (sensorConfigForm) {
+    const campos = ["portaIntervalo", "portaConfirmacao", "nfcIntervalo", "nfcTimeout"];
+    const mensagem = document.getElementById("sensorConfigMessage");
+    const botao = sensorConfigForm.querySelector("button");
+    async function carregarConfigSensores() {
+        try {
+            const resposta = await fetchAdministrativo("/api/sensores/config");
+            if (!resposta.ok) throw new Error("Falha ao carregar configurações.");
+            const dados = await resposta.json();
+            campos.forEach(campo => document.getElementById(campo).value = dados[campo]);
+            botao.disabled = false;
+        } catch (erro) { mensagem.textContent = erro.message; }
+    }
+    sensorConfigForm.addEventListener("submit", async evento => {
+        evento.preventDefault();
+        botao.disabled = true;
+        try {
+            const dados = {};
+            campos.forEach(campo => dados[campo] = Number(document.getElementById(campo).value));
+            const resposta = await fetchAdministrativo("/api/sensores/config", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(dados)
+            });
+            const resultado = await resposta.json();
+            if (!resposta.ok) throw new Error(resultado.erro);
+            mensagem.textContent = resultado.mensagem;
+        } catch (erro) { mensagem.textContent = erro.message; }
+        finally { botao.disabled = false; }
+    });
+    carregarConfigSensores();
+}

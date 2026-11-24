@@ -16,6 +16,7 @@
 #include "nfc/nfcManager.h"
 #include "hardware/doorLock.h"
 #include "sensors/doorHistory.h"
+#include "sensors/sensorConfig.h"
 
 #include "tasks/core0Tasks.h"
 #include "tasks/core1Tasks.h"
@@ -86,11 +87,13 @@ void setup() {
     }
 
     inicializarHistoricoPorta();
+    inicializarSensorConfig();
     inicializarNFC();
 
     configurarRotasStatus(server);
     configurarRotasAuth(server);
     configurarRotasWiFi(server);
+    configurarRotasSensores(server);
     configurarRotasPaginas(server);
     configurarRotasUsuarios(server);
     configurarRotasTelegram(server);

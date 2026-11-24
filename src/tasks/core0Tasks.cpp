@@ -1,5 +1,6 @@
 
 #include "tasks/core0Tasks.h"
+#include "sensors/sensorConfig.h"
 #include "hardware/hardwarePins.h"
 #include "sensors/doorHistory.h"
 #include "time/systemClock.h"
@@ -14,9 +15,7 @@
 static volatile bool estadoPortaAberta = false;
 
 // looping que verifica se a porta está aberta ou fechada
-static constexpr int LEITURAS_PARA_CONFIRMAR = 5;
-static constexpr TickType_t INTERVALO_LEITURA =
-    pdMS_TO_TICKS(10);
+
 
 // retorna true se a porta estiver aberta, false caso contrário
 bool portaEstaAberta() {
@@ -33,18 +32,24 @@ static void tarefaCore0(void* parametro) {
     bool estadoRegistrado = false;
     bool avisoFilaCheia = false;
 
+    SensorConfig anterior = obterSensorConfig();
     while (true) {
+        const SensorConfig config = obterSensorConfig();
+        if (config.portaIntervalo != anterior.portaIntervalo || config.portaConfirmacao != anterior.portaConfirmacao) {
+            leiturasIguais = 0;
+            anterior = config;
+        }
         bool leituraAtual = digitalRead(PIN_SENSOR_PORTA);
 
         if (leituraAtual != leituraAnterior) {
             leituraAnterior = leituraAtual;
             leiturasIguais = 1;
-        } else if (leiturasIguais < LEITURAS_PARA_CONFIRMAR) {
+        } else if (leiturasIguais < static_cast<int>(config.portaConfirmacao)) {
             leiturasIguais++;
         }
 
         // isso aqui serve para evitar que o estado da porta mude rapidamente, tipo se ela estiver meio aberta ou fechada, e o sensor ficar oscilando entre HIGH e LOW. A gente só considera que a porta mudou de estado se a leitura for consistente por um certo número de vezes.
-        if (leiturasIguais >= LEITURAS_PARA_CONFIRMAR) {
+        if (leiturasIguais >= static_cast<int>(config.portaConfirmacao)) {
             const bool novoEstado = leituraAtual == HIGH;
             if (!estadoConfirmado || estadoPortaAberta != novoEstado) {
                 estadoPortaAberta = novoEstado;
@@ -71,7 +76,7 @@ static void tarefaCore0(void* parametro) {
         }
 
         // trava a task por um tempo e depois volta a ler o estado do sensor magnético da porta
-        vTaskDelay(INTERVALO_LEITURA);
+        vTaskDelay(pdMS_TO_TICKS(config.portaIntervalo) > 0 ? pdMS_TO_TICKS(config.portaIntervalo) : 1);
     }
 }
 

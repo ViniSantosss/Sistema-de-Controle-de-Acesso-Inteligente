@@ -1,4 +1,5 @@
 #include "tasks/core1Tasks.h"
+#include "sensors/sensorConfig.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -62,7 +63,7 @@ void tarefaCore1(void*) {
             processarCartao(uid);
             aguardandoRemocaoCartao = true;
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(obterSensorConfig().nfcIntervalo));
     }
 }
 
