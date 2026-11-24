@@ -43,7 +43,7 @@ void iniciarWiFi() {
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
-    WiFi.begin(rede.c_str(), senha.c_str());
+    WiFi.begin(rede.c_str(), senha.isEmpty() ? nullptr : senha.c_str());
     desconectadoDesde = millis();
 }
 
@@ -71,11 +71,11 @@ void atualizarModoAP() {
                 WiFi.mode(WIFI_STA);
                 apAtivo = false;
             } else {
-                WiFi.begin(rede.c_str(), senha.c_str());
+                WiFi.begin(rede.c_str(), senha.isEmpty() ? nullptr : senha.c_str());
             }
         } else if (millis() - inicioTeste >= 30000) {
             testeAtivo = false;
-            WiFi.begin(rede.c_str(), senha.c_str());
+            WiFi.begin(rede.c_str(), senha.isEmpty() ? nullptr : senha.c_str());
             Serial.println("Falha na nova rede; restaurando rede anterior.");
         }
         if (!testeAtivo) { novaSenha = ""; WiFi.setAutoReconnect(true); }
@@ -110,7 +110,7 @@ void configurarRotasWiFi(WebServer& server) {
             return;
         }
         String s = doc["ssid"].as<String>(), p = doc["senha"].as<String>();
-        if (!s.length() || s.length() > 32 || p.length() < 8 || p.length() > 63) {
+        if (!s.length() || s.length() > 32 || (p.length() != 0 && (p.length() < 8 || p.length() > 63))) {
             server.send(400, "application/json", "{\"erro\":\"SSID ou senha invalidos.\"}");
             return;
         }
@@ -119,7 +119,7 @@ void configurarRotasWiFi(WebServer& server) {
         server.send(202, "application/json", "{\"mensagem\":\"Testando nova rede. Aguarde ate 30 segundos.\"}");
         WiFi.setAutoReconnect(false);
         WiFi.disconnect(false, false);
-        WiFi.begin(novaRede.c_str(), novaSenha.c_str());
+        WiFi.begin(novaRede.c_str(), novaSenha.isEmpty() ? nullptr : novaSenha.c_str());
         inicioTeste = millis();
         testeAtivo = true;
     });
