@@ -27,6 +27,7 @@
 #include "system/systemLogger.h"
 #include "system/systemTelemetry.h"
 #include "routes/logRoutes.h"
+#include "routes/changelogRoutes.h"
 
 const int LED_PIN = 2;
 
@@ -104,6 +105,7 @@ void setup() {
     configurarRotasPerformance(server);
     configurarRotasOta(server);
     configurarRotasLogs(server);
+    configurarRotasChangelog(server);
     iniciarTelegram();
 
     server.begin();

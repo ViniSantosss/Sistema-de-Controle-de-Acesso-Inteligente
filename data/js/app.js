@@ -1005,3 +1005,93 @@ if (sensorConfigForm) {
     });
     carregarConfigSensores();
 }
+
+const changelogForm = document.getElementById("changelogForm");
+if (changelogForm) {
+    const lista = document.getElementById("changelogLista");
+    const mensagem = document.getElementById("changelogMensagem");
+    const data = document.getElementById("changelogData");
+    const titulo = document.getElementById("changelogTitulo");
+    const descricao = document.getElementById("changelogDescricao");
+    const salvar = changelogForm.querySelector("button[type=submit]");
+    const cancelar = document.getElementById("changelogCancelar");
+    let registros = [], editando = -1, ocupado = false;
+    function limpar() {
+        editando = -1;
+        changelogForm.reset();
+        salvar.textContent = "Adicionar registro";
+        cancelar.hidden = true;
+    }
+    function renderizar() {
+        lista.replaceChildren();
+        registros.forEach((registro, i) => {
+            const item = document.createElement("article");
+            item.className = "changelog-item";
+            const h = document.createElement("h4");
+            h.textContent = registro.titulo;
+            const d = document.createElement("p");
+            d.textContent = registro.data ? registro.data.split("-").reverse().join("/") : "Sem data";
+            const p = document.createElement("p");
+            p.textContent = registro.descricao;
+            p.style.whiteSpace = "pre-wrap";
+            const a = document.createElement("div");
+            a.className = "changelog-actions";
+            const editar = document.createElement("button");
+            editar.textContent = "Editar";
+            editar.onclick = () => {
+                if (ocupado) return;
+                editando = i;
+                data.value = registro.data;
+                titulo.value = registro.titulo;
+                descricao.value = registro.descricao;
+                salvar.textContent = "Salvar alterações";
+                cancelar.hidden = false;
+                titulo.focus();
+            };
+            const excluir = document.createElement("button");
+            excluir.textContent = "Excluir";
+            excluir.onclick = () => {
+                if (!ocupado && confirm("Excluir este registro?"))
+                    persistir(registros.filter((_, indice) => indice !== i));
+            };
+            a.append(editar, excluir);
+            item.append(h, d, p, a);
+            lista.append(item);
+        });
+    }
+    async function persistir(novos) {
+        if (ocupado) return;
+        ocupado = true;
+        salvar.disabled = true;
+        try {
+            const r = await fetchAdministrativo("/api/changelog", {
+                method: "POST", headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(novos)
+            });
+            const dados = await r.json();
+            if (!r.ok) throw new Error(dados.erro);
+            registros = novos;
+            limpar();
+            renderizar();
+            mensagem.textContent = dados.mensagem;
+        } catch (e) { mensagem.textContent = e.message; }
+        finally { ocupado = false; salvar.disabled = false; }
+    }
+    cancelar.onclick = limpar;
+    changelogForm.addEventListener("submit", e => {
+        e.preventDefault();
+        const novos = registros.slice();
+        const registro = {data: data.value, titulo: titulo.value.trim(), descricao: descricao.value.trim()};
+        if (editando < 0) novos.unshift(registro);
+        else novos[editando] = registro;
+        persistir(novos);
+    });
+    fetchAdministrativo("/api/changelog").then(r => {
+        if (!r.ok) throw new Error("Falha ao carregar changelog.");
+        return r.json();
+    }).then(dados => {
+        registros = dados;
+        renderizar();
+        salvar.disabled = false;
+    }).catch(e => mensagem.textContent = e.message);
+}

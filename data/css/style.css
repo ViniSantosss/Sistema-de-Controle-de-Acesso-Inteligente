@@ -775,3 +775,9 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
 #wifiConfigForm button {
     justify-self: start;
 }
+
+#changelogForm { max-width: none; margin: 16px 0 0; width: 100%; }
+#changelogForm input, #changelogForm textarea { width: 100%; box-sizing: border-box; }
+#changelogForm textarea { font: inherit; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: inherit; resize: vertical; }
+.changelog-item { padding: 12px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.changelog-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
