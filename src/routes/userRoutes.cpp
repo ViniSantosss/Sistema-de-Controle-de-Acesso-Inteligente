@@ -1,5 +1,6 @@
 #include "routes/userRoutes.h"
-#include "system/systemLogger.h"
+#include "routes/authRoutes.h"
+#include "hardware/doorLock.h"
 #include "system/systemTelemetry.h"
 #include "telegram/telegramBot.h"
 #include "storage/userStorage.h"
@@ -7,6 +8,8 @@
 #include "time/systemClock.h"
 
 #include <ArduinoJson.h>
+#include <esp_timer.h>
+#include <mutex>
 #include <time.h>
 
 static bool dadosDeAcessoValidos(
@@ -37,37 +40,28 @@ int proximoId = 1;
 
 Usuario usuarios[MAX_USUARIOS];
 int quantidadeUsuarios = 0;
-bool aguardandoChaveNFC = false;
-int usuarioAguardandoChave = -1;
+// Protege o cadastro e a gravação no LittleFS entre as rotas HTTP e a tarefa NFC.
+static std::mutex mutexUsuarios;
+static constexpr int64_t PRAZO_VINCULACAO_NFC_US = 30000000;
+static int usuarioAguardandoChave = -1;
+static int64_t vinculacaoExpiraEm = 0;
 
-bool estaAguardandoChaveNFC() {
-    return aguardandoChaveNFC;
+static bool estaAguardandoChaveNFC() {
+    return usuarioAguardandoChave != -1 && esp_timer_get_time() < vinculacaoExpiraEm;
 }
 
-int getUsuarioAguardandoChave() {
-    return usuarioAguardandoChave;
-}
-
-void finalizarAguardandoChaveNFC() {
-    aguardandoChaveNFC = false;
-    usuarioAguardandoChave = -1;
-}
-
-ResultadoVinculacaoNFC vincularChaveNFC(
+static ResultadoLeituraNFC vincularChaveNFC(
     const String& uid,
     String& nomeUsuario
 ) {
     ScopedFunctionTimer timer(FunctionMetric::NFC_LINKING);
 
-    int idUsuario = getUsuarioAguardandoChave();
-
-    if (idUsuario == -1) {
-        return ResultadoVinculacaoNFC::FALHA;
-    }
+    const int idUsuario = usuarioAguardandoChave;
+    usuarioAguardandoChave = -1;
 
     int indiceUsuario = -1;
     for (int i = 0; i < quantidadeUsuarios; i++) {
-        if (usuarios[i].id == idUsuario) {
+        if (usuarios[i].id == idUsuario && usuarios[i].ativo) {
             indiceUsuario = i;
             nomeUsuario = usuarios[i].nome;
             break;
@@ -75,21 +69,18 @@ ResultadoVinculacaoNFC vincularChaveNFC(
     }
 
     if (indiceUsuario == -1) {
-        finalizarAguardandoChaveNFC();
-        return ResultadoVinculacaoNFC::FALHA;
+        return ResultadoLeituraNFC::VINCULACAO_FALHOU;
     }
 
     for (int i = 0; i < quantidadeUsuarios; i++) {
         if (usuarios[i].id == idUsuario &&
             usuarios[i].credencialNFC == uid) {
-            finalizarAguardandoChaveNFC();
-            return ResultadoVinculacaoNFC::SUCESSO;
+            return ResultadoLeituraNFC::CHAVE_VINCULADA;
         }
 
         if (usuarios[i].id != idUsuario &&
             usuarios[i].credencialNFC == uid) {
-            finalizarAguardandoChaveNFC();
-            return ResultadoVinculacaoNFC::CHAVE_JA_CADASTRADA;
+            return ResultadoLeituraNFC::CHAVE_JA_CADASTRADA;
         }
     }
 
@@ -98,15 +89,13 @@ ResultadoVinculacaoNFC vincularChaveNFC(
 
     if (!salvarUsuarios()) {
         usuarios[indiceUsuario].credencialNFC = credencialAnterior;
-        finalizarAguardandoChaveNFC();
-        return ResultadoVinculacaoNFC::FALHA;
+        return ResultadoLeituraNFC::VINCULACAO_FALHOU;
     }
 
-    finalizarAguardandoChaveNFC();
-    return ResultadoVinculacaoNFC::SUCESSO;
+    return ResultadoLeituraNFC::CHAVE_VINCULADA;
 }
 
-ResultadoAutenticacaoNFC autenticarChaveNFC(
+static ResultadoLeituraNFC autenticarChaveNFC(
     const String& uid,
     String& nomeUsuario,
     String& tipoAcesso,
@@ -123,11 +112,7 @@ ResultadoAutenticacaoNFC autenticarChaveNFC(
             dataExpiracao = usuarios[i].dataExpiracao;
 
             if (!usuarios[i].ativo) {
-                Serial.print("Acesso negado: usuario desativado - ");
-                Serial.println(usuarios[i].nome);
-                registrarLog(LogLevel::WARNING, "Acesso NFC negado: usuario desativado.");
-
-                return ResultadoAutenticacaoNFC::USUARIO_DESATIVADO;
+                return ResultadoLeituraNFC::USUARIO_DESATIVADO;
             }
 
             if (tipoAcesso == "TEMPORARIO") {
@@ -137,37 +122,38 @@ ResultadoAutenticacaoNFC autenticarChaveNFC(
                         dataExpiracao,
                         instanteExpiracao
                     )) {
-                    Serial.println(
-                        "Acesso negado: validade temporal nao verificavel."
-                    );
-                    registrarLog(
-                        LogLevel::WARNING,
-                        "Acesso NFC negado: validade temporal nao verificavel."
-                    );
-                    return ResultadoAutenticacaoNFC::VALIDADE_INDISPONIVEL;
+                    return ResultadoLeituraNFC::VALIDADE_INDISPONIVEL;
                 }
 
                 if (time(nullptr) > instanteExpiracao) {
-                    Serial.print("Acesso negado: validade expirada - ");
-                    Serial.println(nomeUsuario);
-                    registrarLog(LogLevel::WARNING, "Acesso NFC negado: credencial expirada.");
-                    return ResultadoAutenticacaoNFC::CHAVE_EXPIRADA;
+                    return ResultadoLeituraNFC::CHAVE_EXPIRADA;
                 }
             }
 
-            Serial.print("Acesso autorizado: ");
-            Serial.println(usuarios[i].nome);
-            registrarLog(LogLevel::INFO, "Acesso NFC autorizado.");
-
-            return ResultadoAutenticacaoNFC::AUTORIZADO;
+            return ResultadoLeituraNFC::AUTORIZADO;
         }
     }
 
-    Serial.print("Acesso negado: chave nao cadastrada - ");
-    Serial.println(uid);
-    registrarLog(LogLevel::WARNING, "Acesso NFC negado: credencial desconhecida.");
+    return ResultadoLeituraNFC::CHAVE_DESCONHECIDA;
+}
 
-    return ResultadoAutenticacaoNFC::CHAVE_DESCONHECIDA;
+ResultadoLeituraNFC processarLeituraNFC(
+    const String& uid,
+    String& nomeUsuario,
+    String& tipoAcesso,
+    String& dataExpiracao
+) {
+    const std::lock_guard<std::mutex> acesso(mutexUsuarios);
+    if (estaAguardandoChaveNFC()) {
+        return vincularChaveNFC(uid, nomeUsuario);
+    }
+
+    const ResultadoLeituraNFC resultado =
+        autenticarChaveNFC(uid, nomeUsuario, tipoAcesso, dataExpiracao);
+    if (resultado == ResultadoLeituraNFC::AUTORIZADO) {
+        liberarTranca();
+    }
+    return resultado;
 }
 
 void configurarRotasUsuarios(WebServer& server) {
@@ -175,6 +161,9 @@ void configurarRotasUsuarios(WebServer& server) {
     // ROTA POST /api/usuarios --------------------------------------
 
     server.on("/api/usuarios", HTTP_POST, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
 
         if (!server.hasArg("nome") || !server.hasArg("tipoAcesso")) {
             server.send(
@@ -209,7 +198,9 @@ void configurarRotasUsuarios(WebServer& server) {
             return;
         }
 
+        std::unique_lock<std::mutex> acesso(mutexUsuarios);
         if (quantidadeUsuarios >= MAX_USUARIOS) {
+            acesso.unlock();
             server.send(
                 409,
                 "application/json",
@@ -231,6 +222,7 @@ void configurarRotasUsuarios(WebServer& server) {
         if (!salvarUsuarios()) {
             quantidadeUsuarios--;
             proximoId--;
+            acesso.unlock();
             server.send(
                 500,
                 "application/json",
@@ -239,6 +231,7 @@ void configurarRotasUsuarios(WebServer& server) {
             return;
         }
 
+        acesso.unlock();
         const String tipoDescricao = descricaoTipoAcesso(tipoAcesso);
         notificarUsuarioCadastrado(nome, tipoDescricao);
 
@@ -254,6 +247,9 @@ void configurarRotasUsuarios(WebServer& server) {
     });
 
     server.on("/api/usuarios", HTTP_PUT, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
         if (!server.hasArg("id") ||
             !server.hasArg("nome") ||
             !server.hasArg("tipoAcesso")) {
@@ -281,6 +277,7 @@ void configurarRotasUsuarios(WebServer& server) {
             return;
         }
 
+        std::unique_lock<std::mutex> acesso(mutexUsuarios);
         for (int i = 0; i < quantidadeUsuarios; i++) {
             if (usuarios[i].id != id) {
                 continue;
@@ -294,6 +291,7 @@ void configurarRotasUsuarios(WebServer& server) {
 
             if (!salvarUsuarios()) {
                 usuarios[i] = usuarioAnterior;
+                acesso.unlock();
                 server.send(
                     500,
                     "application/json",
@@ -302,6 +300,7 @@ void configurarRotasUsuarios(WebServer& server) {
                 return;
             }
 
+            acesso.unlock();
             JsonDocument resposta;
             resposta["mensagem"] = "Usuario atualizado com sucesso.";
             server.send(
@@ -312,6 +311,7 @@ void configurarRotasUsuarios(WebServer& server) {
             return;
         }
 
+        acesso.unlock();
         server.send(
             404,
             "application/json",
@@ -322,12 +322,16 @@ void configurarRotasUsuarios(WebServer& server) {
     //ROTA GET /api/usuarios --------------------------------------
 
     server.on("/api/usuarios", HTTP_GET, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
 
         JsonDocument documento;
         JsonArray lista = documento.to<JsonArray>();
         const bool horarioConfiavel = horarioSistemaConfiavel();
         const time_t agora = time(nullptr);
 
+        std::unique_lock<std::mutex> acesso(mutexUsuarios);
         for (int i = 0; i < quantidadeUsuarios; i++) {
             JsonObject usuario = lista.add<JsonObject>();
             time_t instanteExpiracao;
@@ -356,6 +360,7 @@ void configurarRotasUsuarios(WebServer& server) {
                 formatarDataExpiracao(usuarios[i].dataExpiracao);
         }
 
+        acesso.unlock();
         server.send(
             200,
             "application/json",
@@ -364,6 +369,9 @@ void configurarRotasUsuarios(WebServer& server) {
     });
 
     server.on("/api/usuarios/desativar", HTTP_POST, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
 
         if (!server.hasArg("id")) {
             server.send(
@@ -376,15 +384,28 @@ void configurarRotasUsuarios(WebServer& server) {
 
         int id = server.arg("id").toInt();
 
+        std::unique_lock<std::mutex> acesso(mutexUsuarios);
         for (int i = 0; i < quantidadeUsuarios; i++) {
 
             if (usuarios[i].id == id) {
 
+                const bool ativoAnterior = usuarios[i].ativo;
                 usuarios[i].ativo = false;
+                if (!salvarUsuarios()) {
+                    usuarios[i].ativo = ativoAnterior;
+                    acesso.unlock();
+                    server.send(500, "application/json",
+                                "{\"erro\":\"Nao foi possivel salvar a desativacao\"}");
+                    return;
+                }
 
-                salvarUsuarios();
+                if (usuarioAguardandoChave == id) {
+                    usuarioAguardandoChave = -1;
+                }
 
-                notificarUsuarioDesativado(usuarios[i].nome);
+                const String nome = usuarios[i].nome;
+                acesso.unlock();
+                notificarUsuarioDesativado(nome);
 
                 server.send(
                     200,
@@ -392,18 +413,22 @@ void configurarRotasUsuarios(WebServer& server) {
                     "{\"mensagem\":\"Usuario desativado com sucesso\"}"
                 );
 
-            return;
+                return;
             }
         }
 
-            server.send(
-                404,
-                "application/json",
-                "{\"erro\":\"Usuario nao encontrado\"}"
-            );
+        acesso.unlock();
+        server.send(
+            404,
+            "application/json",
+            "{\"erro\":\"Usuario nao encontrado\"}"
+        );
     });
 
     server.on("/api/usuarios", HTTP_DELETE, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
 
         if (!server.hasArg("id")) {
             server.send(
@@ -416,11 +441,12 @@ void configurarRotasUsuarios(WebServer& server) {
 
         int id = server.arg("id").toInt();
 
+        std::unique_lock<std::mutex> acesso(mutexUsuarios);
         for (int i = 0; i < quantidadeUsuarios; i++) {
 
             if (usuarios[i].id == id) {
 
-                String nomeUsuario = usuarios[i].nome;
+                const Usuario usuarioRemovido = usuarios[i];
 
                 // Move os usuarios seguintes uma posicao para tras
                 for (int j = i; j < quantidadeUsuarios - 1; j++) {
@@ -429,9 +455,25 @@ void configurarRotasUsuarios(WebServer& server) {
 
                 quantidadeUsuarios--;
 
-                salvarUsuarios();
+                if (!salvarUsuarios()) {
+                    for (int j = quantidadeUsuarios; j > i; j--) {
+                        usuarios[j] = usuarios[j - 1];
+                    }
+                    usuarios[i] = usuarioRemovido;
+                    quantidadeUsuarios++;
+                    acesso.unlock();
+                    server.send(500, "application/json",
+                                "{\"erro\":\"Nao foi possivel salvar a exclusao\"}");
+                    return;
+                }
 
-                notificarUsuarioExcluido(nomeUsuario);
+                usuarios[quantidadeUsuarios] = {};
+                if (usuarioAguardandoChave == id) {
+                    usuarioAguardandoChave = -1;
+                }
+
+                acesso.unlock();
+                notificarUsuarioExcluido(usuarioRemovido.nome);
 
                 server.send(
                     200,
@@ -443,6 +485,7 @@ void configurarRotasUsuarios(WebServer& server) {
             }
         }
 
+        acesso.unlock();
         server.send(
             404,
             "application/json",
@@ -451,6 +494,9 @@ void configurarRotasUsuarios(WebServer& server) {
     });
 
     server.on("/api/usuarios/aguardar-chave", HTTP_POST, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
 
         if (!server.hasArg("id")) {
             server.send(
@@ -463,11 +509,13 @@ void configurarRotasUsuarios(WebServer& server) {
 
         int id = server.arg("id").toInt();
 
+        std::unique_lock<std::mutex> acesso(mutexUsuarios);
         for (int i = 0; i < quantidadeUsuarios; i++) {
 
             if (usuarios[i].id == id) {
 
                 if (!usuarios[i].ativo) {
+                    acesso.unlock();
                     server.send(
                         400,
                         "application/json",
@@ -476,19 +524,28 @@ void configurarRotasUsuarios(WebServer& server) {
                     return;
                 }
 
-                aguardandoChaveNFC = true;
+                if (usuarioAguardandoChave != id && estaAguardandoChaveNFC()) {
+                    acesso.unlock();
+                    server.send(409, "application/json",
+                                "{\"erro\":\"Ja existe outra vinculacao NFC em andamento\"}");
+                    return;
+                }
+
                 usuarioAguardandoChave = id;
+                vinculacaoExpiraEm = esp_timer_get_time() + PRAZO_VINCULACAO_NFC_US;
+                acesso.unlock();
 
                 server.send(
                     200,
                     "application/json",
-                    "{\"mensagem\":\"Aproxime a chave NFC do leitor\"}"
+                    "{\"mensagem\":\"Aproxime a chave NFC do leitor em ate 30 segundos\"}"
                 );
 
                 return;
             }
         }
 
+        acesso.unlock();
         server.send(
             404,
             "application/json",

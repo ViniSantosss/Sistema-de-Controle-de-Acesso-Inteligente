@@ -5,13 +5,10 @@
 
 void configurarRotasUsuarios(WebServer& server);
 
-enum class ResultadoVinculacaoNFC {
-    SUCESSO,
+enum class ResultadoLeituraNFC {
+    CHAVE_VINCULADA,
     CHAVE_JA_CADASTRADA,
-    FALHA
-};
-
-enum class ResultadoAutenticacaoNFC {
+    VINCULACAO_FALHOU,
     AUTORIZADO,
     CHAVE_DESCONHECIDA,
     USUARIO_DESATIVADO,
@@ -19,16 +16,10 @@ enum class ResultadoAutenticacaoNFC {
     VALIDADE_INDISPONIVEL
 };
 
-ResultadoVinculacaoNFC vincularChaveNFC(const String& uid, String& nomeUsuario);
-ResultadoAutenticacaoNFC autenticarChaveNFC(
+ResultadoLeituraNFC processarLeituraNFC(
     const String& uid,
     String& nomeUsuario,
     String& tipoAcesso,
     String& dataExpiracao
 );
-int getUsuarioAguardandoChave();
-void finalizarAguardandoChaveNFC();
-
-bool estaAguardandoChaveNFC();
-
 #endif

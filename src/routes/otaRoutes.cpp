@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <Update.h>
 
+#include "hardware/doorLock.h"
 #include "routes/authRoutes.h"
 #include "system/systemLogger.h"
 
@@ -223,5 +224,6 @@ void processarReinicioOtaPendente() {
 
     reinicioOtaPendente = false;
     registrarLog(LogLevel::INFO, "OTA: atualizacao concluida; reiniciando ESP32.");
+    desenergizarTranca();
     ESP.restart();
 }

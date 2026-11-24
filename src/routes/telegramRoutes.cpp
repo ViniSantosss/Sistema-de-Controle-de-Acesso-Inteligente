@@ -2,11 +2,15 @@
 #include <WebServer.h>
 
 #include "routes/telegramRoutes.h"
+#include "routes/authRoutes.h"
 #include "telegram/telegramBot.h"
 
 void configurarRotasTelegram(WebServer& server) {
 
     server.on("/api/telegram/teste", HTTP_GET, [&server]() {
+        if (!exigirSessaoAdministrativa(server)) {
+            return;
+        }
 
         bool enfileirado = enviarMensagemTelegram(
             "Teste do Sistema de Controle de Acesso."

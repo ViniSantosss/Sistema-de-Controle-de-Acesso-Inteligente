@@ -2,7 +2,7 @@
 
 Sistema de controle de acesso baseado em **ESP32**, desenvolvido para a disciplina de **Performance em Sistemas Ciberfísicos** da PUCPR.
 
-O projeto tem como objetivo desenvolver um sistema capaz de controlar e registrar acessos utilizando comunicação sem fio, autenticação por credencial NFC e, posteriormente, acionamento de uma fechadura elétrica.
+O projeto tem como objetivo controlar e registrar acessos utilizando comunicação sem fio, autenticação por credencial NFC e acionamento de uma fechadura elétrica.
 
 > **Status atual:** o firmware já oferece interface administrativa local, gestão
 > de usuários, leitura NFC, histórico da porta, OTA e monitoramento básico de
@@ -194,18 +194,32 @@ O objetivo inicial é fazer o ESP32:
 
 # 5. Estratégia de desenvolvimento
 
-## Enviar e acessar a interface web
+## Compilar e enviar a interface web
 
-Depois de gravar o firmware, envie também os arquivos da pasta `data/` para o LittleFS:
+Copie `include/secrets.example.h` para `include/secrets.h` e preencha os dados
+da rede Wi-Fi e a conta administrativa. Configure o bot e o chat do Telegram
+se for usar as notificações. Mantenha `secrets.h` fora do Git.
+
+Com o PlatformIO instalado, compile e grave o firmware. O PlatformIO detecta
+a porta serial. Se houver mais de uma placa, selecione a porta com `--upload-port`.
+Na primeira instalação, grave também a imagem da interface web.
+
+A configuração fixa `espressif32 @ 6.12.0` para manter o firmware dentro das
+partições OTA padrão de 1,25 MiB do `esp32dev`.
 
 ```bash
-py -m platformio run --target upload
-py -m platformio run --target uploadfs
+pio run --target upload
+pio run --target uploadfs
+pio device monitor
 ```
 
-O computador ou celular usado para acessar a interface deve estar conectado à mesma rede local do ESP32. Abra no navegador `http://<IP exibido no monitor serial>/` (por exemplo, `http://192.168.1.100/`), usando `http://` e não `https://`.
+`uploadfs` substitui a partição LittleFS. Faça backup de `usuarios.json`,
+`logs.txt` e `historico_porta.json` antes de gravar a interface em uma placa que
+já contenha dados. Atualizações apenas de firmware podem usar upload serial
+ou OTA.
 
-O desenvolvimento deve seguir uma evolução incremental.
+Para testes em uma rede de bancada isolada, abra `http://<IP exibido no monitor serial>/`.
+Em redes compartilhadas, use o modo HTTPS descrito na seção de segurança.
 
 ## Etapa 1 — Firmware básico
 
@@ -312,8 +326,12 @@ após reiniciar o dispositivo, é necessário entrar novamente.
 
 A tabela de partições padrão do ESP32 já inclui `otadata` e duas partições de
 aplicativo OTA, portanto `platformio.ini` não precisa de uma partição customizada.
-OTA atualiza o firmware, não a imagem LittleFS. Para atualizar os arquivos da
-interface, gere e grave separadamente o filesystem com `pio run -t buildfs`.
+OTA atualiza o firmware. `pio run -t buildfs` gera a imagem LittleFS a partir
+dos arquivos da interface. Para gravá-la, siga as instruções de backup e upload
+da seção de desenvolvimento.
+
+Em **Configurações**, o Deep Sleep exige sessão administrativa. O ESP32
+desperta após 60 segundos e pede novo login.
 
 ## Histórico do sensor da porta
 
@@ -452,6 +470,12 @@ horário seja sincronizado após cada inicialização. Usuários antigos sem os
 novos campos continuam sendo carregados; se forem temporários, não recebem
 acesso até que uma validade seja configurada e o relógio esteja confiável.
 Usuários permanentes não dependem do NTP.
+
+O painel abre uma janela de 30 segundos para vincular um cartão NFC. Configure
+`RELE_TRANCA_NIVEL_ATIVO` em `include/secrets.h` com `LOW` ou `HIGH`, conforme
+o módulo instalado, para habilitar o acionamento no GPIO 26. Um cartão autorizado
+gera um pulso de 3 segundos. Confira em bancada a polaridade e o estado do
+módulo ao ligar, reiniciar ou entrar em Deep Sleep antes de conectar a fechadura.
 
 ---
 
@@ -593,6 +617,31 @@ Credenciais de servidor
 
 Quando necessário, utilizar arquivos locais de configuração e versões de exemplo sem informações reais.
 
+### Administração por HTTPS
+
+O firmware serve HTTP na rede local. Para acessar a administração por HTTPS,
+use um proxy reverso com certificado confiável e coloque o ESP32 e o proxy
+em um segmento privado. No firewall, limite o acesso à porta 80 do ESP32 ao
+proxy, pois o trecho entre o proxy e a placa usa HTTP.
+
+Defina `ADMIN_PROXY_IP` em `include/secrets.h` com o endereço de origem do proxy
+nesse segmento. Nesse modo, o firmware exige esse IP e o cabeçalho
+`X-Forwarded-Proto: https` para aceitar login e sessões administrativas. O cookie
+recebe o atributo `Secure`. No proxy, sobrescreva o cabeçalho e preserve o host.
+Exemplo para um bloco `server` Nginx já configurado com TLS:
+
+```nginx
+location / {
+    proxy_pass http://192.168.50.10;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto https;
+    client_max_body_size 2m;
+}
+```
+
+Abra a interface pelo endereço HTTPS do proxy. Reserve o modo HTTP direto para
+testes em uma rede de bancada isolada.
+
 ---
 
 # 15. Regras para desenvolvimento
@@ -633,6 +682,7 @@ O projeto deve evitar complexidade prematura.
 ### Em desenvolvimento
 
 * [ ] Testes integrados no ESP32 físico
+* [ ] Validação da fechadura e do relé no hardware
 * [ ] Configuração de Wi-Fi por modo de provisionamento
 
 ### Futuro
@@ -642,8 +692,6 @@ O projeto deve evitar complexidade prematura.
 * [ ] Banco de dados
 * [ ] PN532
 * [ ] Autenticação NFC
-* [ ] Relé
-* [ ] Fechadura elétrica
 * [ ] Controle de usuários
 * [ ] Controle de acessos temporários
 * [ ] Telegram
