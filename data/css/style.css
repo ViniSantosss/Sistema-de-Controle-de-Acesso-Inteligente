@@ -761,3 +761,17 @@ h2 { margin-bottom: 0; font-size: 19px; font-weight: 620; }
     .login-page { padding: 18px; }
     .login-shell { padding: 25px 22px; }
 }
+/* Configuracao de rede: mesmo alinhamento da secao OTA. */
+#wifiConfigForm {
+    width: 100%;
+    max-width: none;
+    margin: 12px 0 0;
+    justify-items: stretch;
+}
+#wifiConfigForm input {
+    width: 100%;
+    box-sizing: border-box;
+}
+#wifiConfigForm button {
+    justify-self: start;
+}
