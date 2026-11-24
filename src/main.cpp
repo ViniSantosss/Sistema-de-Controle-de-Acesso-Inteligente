@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 #include "routes/statusRoutes.h"
 #include "network/wifiManager.h"
@@ -114,10 +116,25 @@ void setup() {
 }
 
 void loop() {
-    processarHistoricoPortaPendente();
+    static uint32_t ultimoHistorico = 0;
+    static uint32_t ultimoWiFi = 0;
+
     server.handleClient();
-    atualizarModoAP();
-    atualizarConexaoWiFi();
+    const uint32_t agora = millis();
+
+    if (agora - ultimoHistorico >= 100) {
+        ultimoHistorico = agora;
+        processarHistoricoPortaPendente();
+    }
+
+    if (agora - ultimoWiFi >= 1000) {
+        ultimoWiFi = agora;
+        atualizarModoAP();
+        atualizarConexaoWiFi();
+    }
+
     processarDeepSleepPendente();
     processarReinicioOtaPendente();
+    // Libera o core para outras tasks sem espera ocupada.
+    vTaskDelay(1);
 }
